@@ -41,7 +41,8 @@ void main() {
         targetPlatform: AppUpdateTargetPlatform.windows,
         releaseLoader: () async => <String, Object?>{
           'tag_name': 'v0.3.0',
-          'html_url': 'https://github.com/ningqi24/FocuBili-UI/releases/tag/v0.3.0',
+          'html_url':
+              'https://github.com/ningqi24/FocuBili-UI/releases/tag/v0.3.0',
           'assets': <Map<String, Object?>>[
             <String, Object?>{
               'name': 'FocuBili-v0.3.0-x64.msix',

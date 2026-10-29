@@ -87,21 +87,22 @@ abstract final class AppTheme {
     final Color muted = isLight ? _mutedLight : _mutedDark;
     final Color ink = isLight ? _inkLight : _inkDark;
 
-    ColorScheme colors = ColorScheme.fromSeed(
-      seedColor: seedColor,
-      brightness: brightness,
-      dynamicSchemeVariant: seedColor == _brandColor
-          ? DynamicSchemeVariant.tonalSpot
-          : DynamicSchemeVariant.fidelity,
-    ).copyWith(
-      // 中性阶不随强调色变化，保证界面色调统一简约。
-      surface: surface,
-      onSurface: ink,
-      onSurfaceVariant: muted,
-      outlineVariant: rule,
-      error: isLight ? errorColor : const Color(0xFFC9736B),
-      onError: isLight ? Colors.white : const Color(0xFF2A1210),
-    );
+    ColorScheme colors =
+        ColorScheme.fromSeed(
+          seedColor: seedColor,
+          brightness: brightness,
+          dynamicSchemeVariant: seedColor == _brandColor
+              ? DynamicSchemeVariant.tonalSpot
+              : DynamicSchemeVariant.fidelity,
+        ).copyWith(
+          // 中性阶不随强调色变化，保证界面色调统一简约。
+          surface: surface,
+          onSurface: ink,
+          onSurfaceVariant: muted,
+          outlineVariant: rule,
+          error: isLight ? errorColor : const Color(0xFFC9736B),
+          onError: isLight ? Colors.white : const Color(0xFF2A1210),
+        );
     if (seedColor == _brandColor) {
       // 静谧蓝的精确令牌：主色与容器色直接取自设计规范。
       colors = colors.copyWith(
@@ -312,6 +313,8 @@ class AppThemeAccent extends ThemeExtension<AppThemeAccent> {
     if (other == null) {
       return this;
     }
-    return AppThemeAccent(seedColor: Color.lerp(seedColor, other.seedColor, t)!);
+    return AppThemeAccent(
+      seedColor: Color.lerp(seedColor, other.seedColor, t)!,
+    );
   }
 }

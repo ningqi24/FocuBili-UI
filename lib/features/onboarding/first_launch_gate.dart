@@ -202,7 +202,9 @@ class _FirstLaunchGateState extends State<FirstLaunchGate> {
         child: AlertDialog(
           key: const Key('tablet-layout-guide'),
           title: const Text('大屏布局'),
-          content: const Text('Focubili-UIX为大屏设备设计了横屏布局，具有更棒的使用体验，现已为你启用，你也可以切换到竖屏布局'),
+          content: const Text(
+            'Focubili-UIX为大屏设备设计了横屏布局，具有更棒的使用体验，现已为你启用，你也可以切换到竖屏布局',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
