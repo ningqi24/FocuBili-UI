@@ -140,11 +140,28 @@ class _SubscriptionHomeCardState extends State<SubscriptionHomeCard> {
                   ],
                 ),
               ),
-            for (final item in items)
-              SubscriptionFeedTile(
-                item: item,
-                compact: true,
-                onTap: _opening ? null : () => unawaited(_open(item)),
+            // 更新横滑降噪：等宽卡片横向排列，全部条目一次构建，纵向自然收高。
+            if (items.isNotEmpty)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    for (int index = 0; index < items.length; index++) ...[
+                      if (index > 0) const SizedBox(width: 8),
+                      SizedBox(
+                        width: 248,
+                        child: SubscriptionFeedTile(
+                          item: items[index],
+                          compact: true,
+                          onTap: _opening
+                              ? null
+                              : () => unawaited(_open(items[index])),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             const SizedBox(height: 4),
           ],

@@ -48,6 +48,18 @@ abstract final class AppTheme {
     );
   }
 
+  /// 凹槽填充色（搜索框、徽标等低对比底色），不随强调色变化。
+  static Color sunkenOf(BuildContext context) => Theme.of(context).brightness ==
+      Brightness.light
+      ? _sunkenLight
+      : _sunkenDark;
+
+  /// 发丝分隔线颜色，不随强调色变化。
+  static Color ruleOf(BuildContext context) => Theme.of(context).brightness ==
+      Brightness.light
+      ? _ruleLight
+      : _ruleDark;
+
   /// 创建跟随静谧蓝的浅色 Material 3 主题。
   static ThemeData light({Color seedColor = _brandColor}) {
     return _buildTheme(Brightness.light, seedColor);

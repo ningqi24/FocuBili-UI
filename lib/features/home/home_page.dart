@@ -10,6 +10,7 @@ import '../../services/bilibili_auth_service.dart';
 import '../../services/bilibili_service.dart';
 import '../../services/dashboard_layout_service.dart';
 import '../../services/learning_list_service.dart';
+import '../common/app_network_image.dart';
 import '../focus/focus_dashboard.dart';
 import '../focus/focus_timer_scope.dart';
 import '../focus/focus_video_launcher.dart';
@@ -256,16 +257,38 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              entry.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            const SizedBox(height: 10),
+            // 封面缩略图 + 时长徽标 + 两行标题与学习进度摘要，续学进度一眼可见。
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _buildContinueCover(context, entry),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        entry.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '已学 ${(progress * 100).round()}% · 上次 ${_relativeTime(entry.updatedAt)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             Text(
               'P${entry.partPageNumber} ${entry.partTitle} · ${entry.status.label}',
               maxLines: 1,
@@ -301,6 +324,68 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  /// 续播卡封面：16:9 缩略图，右下角叠加总时长徽标。
+  Widget _buildContinueCover(BuildContext context, LearningListEntry entry) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 116,
+        height: 66,
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            ColoredBox(
+              color: Theme.of(context).brightness == Brightness.light
+                  ? const Color(0xFFF1F0EC)
+                  : const Color(0xFF232329),
+              child: entry.thumbnailUrl.isEmpty
+                  ? Icon(
+                      Icons.play_arrow_rounded,
+                      color: colors.onSurfaceVariant,
+                    )
+                  : AppNetworkImage(
+                      imageUrl: entry.thumbnailUrl,
+                      fit: BoxFit.cover,
+                      memCacheWidth: 232,
+                    ),
+            ),
+            Positioned(
+              right: 4,
+              bottom: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.62),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  _formatPosition(entry.duration),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 把任务最近更新时间转成「刚刚 / N 分钟前 / N 小时前」的相对描述。
+  String _relativeTime(DateTime value) {
+    final Duration diff = DateTime.now().difference(value);
+    if (diff.inMinutes < 1) return '刚刚';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} 分钟前';
+    if (diff.inHours < 24) return '${diff.inHours} 小时前';
+    if (diff.inDays < 30) return '${diff.inDays} 天前';
+    return '更早';
   }
 
   /// 为首页添加随主题变化的背景，并复用应用级计时控制器保持专注状态。

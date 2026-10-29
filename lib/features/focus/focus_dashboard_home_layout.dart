@@ -2,6 +2,28 @@ part of 'focus_dashboard.dart';
 
 /// 首页的欢迎区与响应式容器；专注业务卡片继续由页面状态维护。
 extension _FocusDashboardHomeLayout on _FocusDashboardState {
+  /// 按当前时段给出问候语，建立学习工作台的每日开场感。
+  String _homeGreeting() {
+    final int hour = DateTime.now().hour;
+    final String slot = hour < 6
+        ? '早上好'
+        : hour < 12
+        ? '上午好'
+        : hour < 14
+        ? '中午好'
+        : hour < 18
+        ? '下午好'
+        : '晚上好';
+    return '$slot，继续学习';
+  }
+
+  /// 日期与今日已专注分钟，作为仪表盘的轻量上下文。
+  String _homeTodayMeta() {
+    final DateTime now = DateTime.now();
+    final int minutes = widget.controller.todayFocusedDuration().inMinutes;
+    return '${now.month} 月 ${now.day} 日 · 今日已专注 $minutes 分钟';
+  }
+
   /// 根据文字实际换行高度为首屏留足空间，矮屏和大字体允许自然滚动。
   double _homeHeroHeight(BuildContext context) {
     final Size windowSize = MediaQuery.sizeOf(context);
@@ -10,7 +32,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
         windowSize.height < 648;
     final double preferred = compact
         ? (windowSize.height - 64).clamp(280.0, 720.0).toDouble()
-        : (windowSize.height - 88).clamp(560.0, 760.0).toDouble();
+        : (windowSize.height - 260).clamp(380.0, 560.0).toDouble();
     final ThemeData theme = Theme.of(context);
     final double padding = AdaptiveLayout.centeredHorizontalPadding(
       width: windowSize.width,
@@ -18,41 +40,95 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
       compact: 24,
     );
     final double width = (windowSize.width - padding * 2).clamp(80.0, 840.0);
-    final double titleHeight = _measureHeroText(
-      context,
-      'Focubili-UIX',
-      theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-      width - kMinInteractiveDimension * (_subscriptions.enabled ? 2 : 1),
+    // 顶栏高度取触控按钮（48）与标题文字换行高度的较高者。
+    final double titleHeight = math.max(
+      kMinInteractiveDimension,
+      _measureHeroText(
+        context,
+        'Focubili-UIX',
+        theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+        width - kMinInteractiveDimension * (_subscriptions.enabled ? 2 : 1),
+      ),
     );
-    final double welcomeHeight = _measureHeroText(
+    final double greetingHeight = _measureHeroText(
       context,
-      '今天要学点什么？',
-      theme.textTheme.headlineMedium,
+      _homeGreeting(),
+      theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
       width,
     );
-    final double actionHeight =
-        _measureHeroText(
-          context,
-          '开始搜索',
-          theme.textTheme.labelLarge,
-          width - 56,
+    final double metaHeight = _measureHeroText(
+      context,
+      _homeTodayMeta(),
+      theme.textTheme.bodyMedium,
+      width,
+    );
+    final int todayMinutes = widget.controller.todayFocusedDuration().inMinutes;
+    final int percent =
+        ((todayMinutes / _FocusDashboardState._dailyGoalMinutes).clamp(0, 1) *
+                100)
+            .round();
+    // 仪表盘卡高度：卡片外边距 + 上内边距 + 元信息行 + 间距 + 进度行 + 间距 + 按钮行 + 下内边距。
+    final double goalCardHeight =
+        8 +
+        10 +
+        math.max(
+          _measureHeroText(
+            context,
+            '今日专注目标',
+            theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            width * 0.42,
+          ),
+          _measureHeroText(
+            context,
+            '$todayMinutes / ${_FocusDashboardState._dailyGoalMinutes} 分钟',
+            theme.textTheme.labelLarge,
+            width * 0.42,
+          ),
         ) +
-        24;
+        10 +
+        math.max(
+          8.0,
+          _measureHeroText(
+            context,
+            '$percent%',
+            theme.textTheme.labelLarge,
+            width * 0.2,
+          ),
+        ) +
+        12 +
+        math.max(
+          kMinInteractiveDimension,
+          _measureHeroText(
+                context,
+                '开始专注',
+                theme.textTheme.labelLarge,
+                width * 0.42,
+              ) +
+              24,
+        ) +
+        10;
+    // 订阅引导用组件实测高度；首帧尚未布局时退回保守估值，避免出现空白或溢出。
+    final double introHeight;
+    if (_showSubscriptionIntroduction) {
+      final RenderObject? introBox = _subscriptionIntroKey.currentContext
+          ?.findRenderObject();
+      final double measured = introBox is RenderBox && introBox.hasSize
+          ? introBox.size.height
+          : 0;
+      introHeight = math.max(
+        measured,
+        100 * (MediaQuery.textScalerOf(context).scale(14) / 14).clamp(1.0, 2.5),
+      );
+    } else {
+      introHeight = 0;
+    }
     final double minimum =
-        (titleHeight > 48 ? titleHeight : 48) +
-        welcomeHeight +
-        (actionHeight > 58 ? actionHeight : 58) +
-        30 +
-        24 +
-        34 +
-        48 +
-        (_showSubscriptionIntroduction
-            ? 100 *
-                  (MediaQuery.textScalerOf(context).scale(14) / 14).clamp(
-                    1.0,
-                    2.5,
-                  )
-            : 0);
+        titleHeight +
+        greetingHeight +
+        metaHeight +
+        goalCardHeight +
+        56 +
+        introHeight;
     return preferred > minimum ? preferred : minimum;
   }
 
@@ -77,7 +153,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
   bool _canAnimateHomeHero(BuildContext context) =>
       _homeHeroHeight(context) <= MediaQuery.sizeOf(context).height - 64;
 
-  /// 创建截图中的首屏欢迎区，保留搜索和“我的”两个最短路径入口。
+  /// 创建首屏学习工作台：问候、今日专注进度仪表盘与一步直达的核心动作。
   Widget _buildHomeHero(BuildContext context) {
     final double heroHeight = _homeHeroHeight(context);
     final bool animate = _canAnimateHomeHero(context) && !_editingHomeCards;
@@ -88,7 +164,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
     final double fallOffset = animate ? _scrollOffset * 1.32 : 0;
     final ThemeData theme = Theme.of(context);
     final Color textColor = theme.colorScheme.onSurface;
-    // 两个首页动作按钮都复用应用主题，避免草图颜色泄漏到成品界面。
+    // 首屏入口复用应用主题，避免草图颜色泄漏到成品界面。
     final Color actionColor = theme.colorScheme.primary;
     final Color actionTextColor = theme.colorScheme.onPrimary;
     return SliverToBoxAdapter(
@@ -117,11 +193,12 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
                     return Padding(
                       padding: EdgeInsets.fromLTRB(
                         horizontalPadding,
-                        18,
+                        16,
                         horizontalPadding,
                         12,
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
                           Row(
                             children: <Widget>[
@@ -164,42 +241,26 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
                             ],
                           ),
                           _buildSubscriptionIntroduction(),
-                          const Spacer(),
+                          const SizedBox(height: 14),
                           Text(
-                            '今天要学点什么？',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
+                            _homeGreeting(),
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
                               color: textColor,
                             ),
                           ),
-                          const SizedBox(height: 24),
-                          FilledButton(
-                            key: const Key('home-start-search'),
-                            // 开始搜索按钮函数进入搜索页面，保持首页动作单一明确。
-                            onPressed: widget.onOpenVideo,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: actionColor,
-                              foregroundColor: actionTextColor,
-                              minimumSize: const Size(160, 58),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 28,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _homeTodayMeta(),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
-                            child: const Text('开始搜索'),
                           ),
-                          // 保留旧入口文字节点，但不在新首屏重复绘制第二个按钮。
-                          const SizedBox.shrink(child: Text('打开视频')),
+                          const SizedBox(height: 10),
+                          _buildTodayGoalCard(context),
                           const Spacer(),
-                          Icon(
-                            Icons.keyboard_double_arrow_up_rounded,
-                            key: const Key('home-scroll-hint'),
-                            size: 34,
-                            color: textColor,
-                          ),
+                          // 保留旧入口文字节点，实际入口由仪表盘按钮承担。
+                          const SizedBox.shrink(child: Text('打开视频')),
                         ],
                       ),
                     );
@@ -211,6 +272,136 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
         ),
       ),
     );
+  }
+
+  /// 创建「今日专注目标」仪表盘：今日专注分钟、目标进度与两个核心动作。
+  Widget _buildTodayGoalCard(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final int todayMinutes = widget.controller.todayFocusedDuration().inMinutes;
+    final double goalProgress =
+        (todayMinutes / _FocusDashboardState._dailyGoalMinutes)
+            .clamp(0, 1)
+            .toDouble();
+    final int percent = (goalProgress * 100).round();
+    final bool running = widget.controller.activeSession != null;
+    return Card(
+      key: const Key('home-today-goal'),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    '今日专注目标',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '$todayMinutes / ${_FocusDashboardState._dailyGoalMinutes} 分钟',
+                    textAlign: TextAlign.right,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontFeatures: const <FontFeature>[
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: goalProgress,
+                      minHeight: 8,
+                      backgroundColor: AppTheme.sunkenOf(context),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '$percent%',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: const <FontFeature>[
+                      FontFeature.tabularFigures(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    key: const Key('home-start-focus'),
+                    // 开始专注一步直达专注任务卡，填写目标即可开始计时。
+                    onPressed: () => _scrollToFocusSessionCard(context),
+                    icon: Icon(
+                      running ? Icons.adjust_rounded : Icons.timer_outlined,
+                    ),
+                    label: Text(running ? '查看专注' : '开始专注'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    key: const Key('home-start-search'),
+                    // 开始搜索按钮函数进入搜索页面，保持主题主色的唯一强调。
+                    onPressed: widget.onOpenVideo,
+                    icon: const Icon(Icons.search_rounded),
+                    label: const Text('开始搜索'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 「开始专注」一步直达专注任务卡；卡片被隐藏时退回到卡片区起点。
+  void _scrollToFocusSessionCard(BuildContext context) {
+    final BuildContext? cardContext = _focusSessionCardKey.currentContext;
+    if (cardContext != null) {
+      unawaited(
+        Scrollable.ensureVisible(
+          cardContext,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+        ),
+      );
+      return;
+    }
+    if (_scrollController.hasClients) {
+      unawaited(
+        _scrollController.animateTo(
+          (_homeHeroHeight(context) + 12).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          ),
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+        ),
+      );
+    }
   }
 
   /// 创建首页账号入口的头像或主题色默认人物图标。

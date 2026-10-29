@@ -33,9 +33,13 @@ extension _FocusDashboardHomeCards on _FocusDashboardState {
         icon: Icons.timer_outlined,
         available: ready,
         // 同一编号在准备和计时状态之间切换，不因状态变化重置布局。
-        builder: (context) => activeSession == null
-            ? _buildReadyCard(context)
-            : _buildActiveCard(context, activeSession),
+        // 外层定位键让首屏「开始专注」能一步滚动直达本卡。
+        builder: (context) => KeyedSubtree(
+          key: _focusSessionCardKey,
+          child: activeSession == null
+              ? _buildReadyCard(context)
+              : _buildActiveCard(context, activeSession),
+        ),
       ),
       DashboardCardDefinition(
         id: 'home.today_summary',
