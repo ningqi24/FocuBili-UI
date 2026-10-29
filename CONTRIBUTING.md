@@ -57,6 +57,19 @@
 
    如果 PR 新增了较大的功能，请简单说明实现方式，以及是否会影响现有功能或数据。
 
+## Code Wiki 文档同步
+
+项目在 [docs/wiki/README.md](docs/wiki/README.md) 维护结构化 Code Wiki。任何影响架构、模块职责、关键类/函数、依赖关系、持久化键、平台通道、构建或测试流程的新改动，都必须在同一个 PR 中更新对应章节。
+
+提交 PR 前请确认：
+
+* 改动涉及的模块文档已同步更新；
+* 新增/删除的公开类、路由、通道或存储键已在 Wiki 中体现；
+* 构建、测试或 CI 流程变化已更新 `docs/wiki/08-build-run-test.md`；
+* 更新了 `docs/wiki/README.md` 中的“最后核对”版本与日期。
+
+文档未同步的 PR 可能被视为未完成。
+
 ## 关于 AI 辅助开发
 
 可以使用 ChatGPT、Claude、Copilot 等 AI 工具辅助开发。
