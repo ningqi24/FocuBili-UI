@@ -12,7 +12,7 @@ typedef WindowsClipboardPreferencesLoader =
 /// 定义剪贴板纯文本读取函数，测试可替换系统 Clipboard 调用。
 typedef ClipboardTextReader = Future<String?> Function();
 
-/// 保存 Windows 是否允许焦点哔哩检查剪贴板中的 B站链接。
+/// 保存 Windows 是否允许Focubili-UIX检查剪贴板中的 B站链接。
 class WindowsClipboardLinkPreferencesService {
   /// 创建偏好服务；测试可以注入内存中的 SharedPreferences。
   WindowsClipboardLinkPreferencesService({

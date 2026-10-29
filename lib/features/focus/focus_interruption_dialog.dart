@@ -115,7 +115,7 @@ Future<void> _scheduleReminderWithPermission(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
         title: const Text('需要通知权限'),
-        content: const Text('开启通知后，焦点哔哩才能在你选择的时间提醒继续任务。'),
+        content: const Text('开启通知后，Focubili-UIX才能在你选择的时间提醒继续任务。'),
         actions: <Widget>[
           TextButton(
             // 暂不开启函数只跳过本次系统提醒，不影响打断记录。
@@ -139,7 +139,7 @@ Future<void> _scheduleReminderWithPermission(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
         title: const Text('通知权限未开启'),
-        content: const Text('可以直接打开系统设置，在“通知”中允许焦点哔哩发送提醒。'),
+        content: const Text('可以直接打开系统设置，在“通知”中允许Focubili-UIX发送提醒。'),
         actions: <Widget>[
           TextButton(
             // 取消设置函数保留原因记录但不创建系统提醒。
@@ -203,7 +203,7 @@ Future<bool> _ensureExactAlarmPermission(
     builder: (BuildContext dialogContext) => AlertDialog(
       title: const Text('需要“闹钟和提醒”权限'),
       content: const Text(
-        '允许焦点哔哩设置精确闹钟后，即使你清理应用后台，Android 仍能在所选时间唤醒并发送提醒。系统强制停止应用后，任何应用都无法继续提醒。',
+        '允许Focubili-UIX设置精确闹钟后，即使你清理应用后台，Android 仍能在所选时间唤醒并发送提醒。系统强制停止应用后，任何应用都无法继续提醒。',
       ),
       actions: <Widget>[
         TextButton(

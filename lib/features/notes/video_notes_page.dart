@@ -231,7 +231,7 @@ class _VideoNotesPageState extends State<VideoNotesPage> {
                   ListTile(
                     leading: const Icon(Icons.data_object_rounded),
                     title: const Text('导出为 JSON'),
-                    subtitle: const Text('保留焦点哔哩字段，便于后续回导'),
+                    subtitle: const Text('保留Focubili-UIX字段，便于后续回导'),
                     // JSON 选择函数只返回格式，避免底部面板直接执行耗时文件操作。
                     onTap: () =>
                         Navigator.of(context).pop(VideoNoteExportFormat.json),
@@ -293,7 +293,7 @@ class _VideoNotesPageState extends State<VideoNotesPage> {
       final VideoNoteExportPackage package = await widget.exportService
           .buildPackage(selectedNotes, format);
       final String? savedPath = await FilePicker.saveFile(
-        dialogTitle: '保存焦点哔哩笔记',
+        dialogTitle: '保存Focubili-UIX笔记',
         fileName: package.fileName,
         type: FileType.custom,
         allowedExtensions: <String>[package.extension],

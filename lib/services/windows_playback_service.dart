@@ -47,7 +47,7 @@ class WindowsPlaybackService
            player ??
            Player(
              configuration: const PlayerConfiguration(
-               title: '焦点哔哩',
+               title: 'Focubili-UIX',
                bufferSize: 64 * 1024 * 1024,
              ),
            ) {
@@ -1494,14 +1494,14 @@ class WindowsPlaybackService
       message: clearMessage ? null : (message ?? _snapshot.message),
     );
     _appleSession.update(
-      title: _currentVideo?.title ?? '焦点哔哩',
+      title: _currentVideo?.title ?? 'Focubili-UIX',
       position: _snapshot.position,
       duration: _snapshot.duration,
       playing: _snapshot.isPlaying,
       speed: _snapshot.speed,
     );
     _linuxSession.update(
-      title: _currentVideo?.title ?? '焦点哔哩',
+      title: _currentVideo?.title ?? 'Focubili-UIX',
       volume: (_player.state.volume / 100).clamp(0, 1).toDouble(),
       trackId: '${_currentVideo?.bvid ?? 'none'}_${_currentPart?.cid ?? 0}',
       position: _snapshot.position,

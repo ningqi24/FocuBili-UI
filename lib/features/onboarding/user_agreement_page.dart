@@ -24,7 +24,7 @@ class UserAgreementPage extends StatelessWidget {
   static const List<_AgreementSection> _sections = <_AgreementSection>[
     _AgreementSection(
       '一、非官方项目声明',
-      '焦点哔哩是由个人开发者制作的第三方哔哩哔哩客户端，仅用于个人学习、技术研究和专注观看公开视频。\n\n'
+      'Focubili-UIX是由个人开发者制作的第三方哔哩哔哩客户端，仅用于个人学习、技术研究和专注观看公开视频。\n\n'
           '本应用不是哔哩哔哩官方客户端，与哔哩哔哩及其关联主体不存在隶属、授权、代理、合作或其他官方关系。\n\n'
           '“哔哩哔哩”“bilibili”、相关名称、标识、视频内容及其他权利，归其各自权利人所有。',
     ),
@@ -122,7 +122,7 @@ class UserAgreementPage extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                 children: <Widget>[
                   Text(
-                    '焦点哔哩（FocuBili）用户须知与使用协议',
+                    'Focubili-UIX用户须知与使用协议',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -134,7 +134,7 @@ class UserAgreementPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    '欢迎使用焦点哔哩（FocuBili）。在继续使用前，请您认真阅读并充分理解以下内容。',
+                    '欢迎使用Focubili-UIX。在继续使用前，请您认真阅读并充分理解以下内容。',
                     style: Theme.of(
                       context,
                     ).textTheme.bodyMedium?.copyWith(height: 1.65),

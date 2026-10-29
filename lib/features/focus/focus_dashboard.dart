@@ -813,7 +813,7 @@ class _FocusDashboardState extends State<FocusDashboard> {
                 _buildCardsSliver(context, activeSession, finishedSession)
               else ...<Widget>[
                 SliverAppBar.large(
-                  title: const Text('焦点哔哩'),
+                  title: const Text('Focubili-UIX'),
                   actions: <Widget>[
                     _buildSubscriptionButton(),
                     if (widget.onOpenLearningList != null)

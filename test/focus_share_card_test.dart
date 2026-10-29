@@ -33,7 +33,7 @@ void main() {
       ),
     );
 
-    expect(find.text('焦点哔哩'), findsOneWidget);
+    expect(find.text('Focubili-UIX'), findsOneWidget);
     expect(find.text('看完集合课程'), findsOneWidget);
     expect(find.text('今日专注时长'), findsOneWidget);
     expect(find.text('40 分钟'), findsOneWidget);

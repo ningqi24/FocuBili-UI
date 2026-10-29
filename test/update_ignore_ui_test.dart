@@ -29,12 +29,12 @@ void main() {
         targetPlatform: AppUpdateTargetPlatform.android,
         releaseLoader: () async => {
           'tag_name': available ? 'v1.7.1' : 'v1.7.0',
-          'html_url': 'https://github.com/L1Xu4n/FocuBili/releases/tag/v1.7.1',
+          'html_url': 'https://github.com/ningqi24/FocuBili-UI/releases/tag/v1.7.1',
           'assets': [
             {
               'name': 'FocuBili-v1.7.1-android.apk',
               'browser_download_url':
-                  'https://github.com/L1Xu4n/FocuBili/releases/download/v1.7.1/FocuBili-v1.7.1-android.apk',
+                  'https://github.com/ningqi24/FocuBili-UI/releases/download/v1.7.1/FocuBili-v1.7.1-android.apk',
             },
           ],
           'body':

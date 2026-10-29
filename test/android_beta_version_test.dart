@@ -19,7 +19,7 @@ void main() {
       ).firstMatch(gradle)!.group(1)!;
       expect(debug, contains('applicationIdSuffix ".preview"'));
       expect(debug, contains('versionNameSuffix "-preview"'));
-      expect(debug, contains('焦点哔哩 Beta'));
+      expect(debug, contains('Focubili-UIX Beta'));
       final debugManifest = File(
         'android/app/src/debug/AndroidManifest.xml',
       ).readAsStringSync();

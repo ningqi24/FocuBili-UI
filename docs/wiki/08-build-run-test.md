@@ -13,7 +13,7 @@
 ## 8.2 初始化
 
 ```bash
-git clone https://github.com/L1Xu4n/FocuBili.git
+git clone https://github.com/ningqi24/FocuBili-UI.git
 cd FocuBili
 flutter pub get
 dart tool/write_build_metadata.dart

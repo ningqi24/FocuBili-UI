@@ -21,7 +21,7 @@ final _settingsAliases = <Key, String>{
   Key('enable-focus-do-not-disturb'): '专注 勿扰 通知 Windows 系统专注',
   Key('theme-mode-setting'): '主题模式 浅色 深色 跟随系统 外观',
   Key('ui-text-size-preference'): '界面文字大小 字体 字号 缩放 大屏 放大 text font scale',
-  Key('theme-color-setting'): '主题强调色 蓝色 B站粉 玫红 珊瑚橙 翠绿 湖蓝 薰衣草紫 外观',
+  Key('theme-color-setting'): '主题强调色 静谧蓝 松绿 陶土 暮紫 石墨 国庆红 外观',
   Key('open-android-permissions'): '权限管理 系统能力 通知 后台运行',
   Key('enable-startup-update-check'): '启动时检查更新 GitHub Release',
   Key('open-cache-management'): '缓存管理 图片 头像 封面 视频 字幕 存储 空间 自动 清理 上限',

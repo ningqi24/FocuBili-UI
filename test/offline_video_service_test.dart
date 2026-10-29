@@ -26,7 +26,7 @@ VideoPreview _preview() {
     bvid: 'BV1GJ411x7h7',
     cid: 137649199,
     title: '离线下载测试视频',
-    ownerName: '焦点哔哩',
+    ownerName: 'Focubili-UIX',
     duration: Duration(minutes: 3, seconds: 32),
     parts: <VideoPart>[
       VideoPart(

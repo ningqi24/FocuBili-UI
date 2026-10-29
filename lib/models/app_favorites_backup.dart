@@ -31,7 +31,7 @@ class AppFavoritesBackup {
 
   /// 生成各系统都能直接保存的文件名，避免日期中的冒号。
   String get fileName =>
-      'FocuBili-favorites-${exportedAt.toUtc().microsecondsSinceEpoch}.json';
+      'Focubili-UIX-favorites-${exportedAt.toUtc().microsecondsSinceEpoch}.json';
 
   /// 序列化为 UTF-8 JSON，并保证导出的文件可以被同一版本完整回导。
   Uint8List toBytes() {
@@ -72,10 +72,10 @@ class AppFavoritesBackup {
       final text = utf8.decode(bytes).replaceFirst(RegExp(r'^\uFEFF'), '');
       final root = jsonDecode(text);
       if (root is! Map || root['format'] != format) {
-        throw const FormatException('请选择焦点哔哩导出的软件收藏夹 JSON 文件。');
+        throw const FormatException('请选择Focubili-UIX导出的软件收藏夹 JSON 文件。');
       }
       if (root['version'] != version) {
-        throw const FormatException('不支持这个收藏夹备份版本，请升级焦点哔哩后重试。');
+        throw const FormatException('不支持这个收藏夹备份版本，请升级Focubili-UIX后重试。');
       }
       final exportedAt = _date(root, 'exportedAt');
       if (root['folders'] is! List) throw const FormatException();

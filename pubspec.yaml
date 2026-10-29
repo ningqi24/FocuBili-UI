@@ -155,8 +155,8 @@ flutter:
 
 # Windows 安装包使用稳定身份，让开始菜单、升级、卸载和 Toast 历史属于同一个应用。
 msix_config:
-  display_name: 焦点哔哩
-  publisher_display_name: L1Xu4n
+  display_name: Focubili-UIX
+  publisher_display_name: ningqi24
   identity_name: com.focubili.app
   msix_version: 1.8.0.26
   logo_path: assets/icon/focubili_icon.png
@@ -166,10 +166,10 @@ msix_config:
   architecture: x64
   os_min_version: 10.0.17763.0
   output_path: build/windows/x64/installer
-  output_name: FocuBili-v1.8.0-windows-x64
+  output_name: Focubili-UIX-v1.8.0-windows-x64
   store: false
   install_certificate: false
   toast_activator:
     clsid: 9f98f5c7-2089-4f2d-9561-0cfdcb5ccf1b
     arguments: focubili-toast-activation
-    display_name: 焦点哔哩通知
+    display_name: Focubili-UIX 通知

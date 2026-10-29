@@ -54,7 +54,7 @@ void main() {
     expect(package.extension, 'md');
     expect(package.imageCount, 0);
     final String markdown = utf8.decode(package.bytes);
-    expect(markdown, contains('# 焦点哔哩时间点笔记'));
+    expect(markdown, contains('# Focubili-UIX时间点笔记'));
     expect(markdown, contains('`12:34`'));
     expect(markdown, contains('德摩根律'));
   });

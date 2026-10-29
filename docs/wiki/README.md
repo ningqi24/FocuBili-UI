@@ -1,4 +1,4 @@
-# FocuBili · 焦点哔哩 — Code Wiki
+# Focubili-UIX — Code Wiki
 
 > 本目录是 FocuBili 项目的结构化 Code Wiki。内容基于仓库源码（`lib/`、`android/`、`ios/`、`macos/`、`linux/`、`windows/`、`packages/`、`third_party/`、`tool/`）整理，面向希望快速理解、修改或扩展本项目的开发者。
 
@@ -19,7 +19,7 @@
 
 | 项目 | 值 |
 |---|---|
-| 应用名 | FocuBili（焦点哔哩），第三方 B 站客户端 |
+| 应用名 | Focubili-UIX，第三方 B 站客户端（原名焦点哔哩） |
 | 版本 | `1.8.1+31`（见 [pubspec.yaml](../../pubspec.yaml)） |
 | 框架 | Flutter 3.44.6（Linux 使用 3.47.5），Dart SDK `>=3.10.0 <4.0.0` |
 | 支持平台 | Android 7.0+、Windows 10 1809+（x64）、iOS、macOS、Ubuntu 24.04 系列（amd64） |

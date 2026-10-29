@@ -25,7 +25,7 @@ class BilibiliVideoDeepLinkTarget {
   final Duration? initialPosition;
 }
 
-/// 只解析焦点哔哩当前真正支持的视频网页和 `bilibili://video` Scheme。
+/// 只解析Focubili-UIX当前真正支持的视频网页和 `bilibili://video` Scheme。
 abstract final class BilibiliDeepLinkParser {
   static final RegExp _bvidPattern = RegExp(
     r'BV[0-9A-Za-z]{10}',

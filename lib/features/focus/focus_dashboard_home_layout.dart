@@ -20,7 +20,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
     final double width = (windowSize.width - padding * 2).clamp(80.0, 840.0);
     final double titleHeight = _measureHeroText(
       context,
-      '焦点哔哩',
+      'Focubili-UIX',
       theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
       width - kMinInteractiveDimension * (_subscriptions.enabled ? 2 : 1),
     );
@@ -135,7 +135,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
                                     context,
                                   ).pushNamed(AppRoutes.about),
                                   child: Text(
-                                    '焦点哔哩',
+                                    'Focubili-UIX',
                                     style: theme.textTheme.headlineSmall
                                         ?.copyWith(
                                           fontWeight: FontWeight.w800,
@@ -303,7 +303,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.about),
                     child: Text(
-                      '焦点哔哩',
+                      'Focubili-UIX',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),

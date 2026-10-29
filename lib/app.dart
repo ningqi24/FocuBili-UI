@@ -28,7 +28,7 @@ import 'services/bilibili_deep_link_service.dart';
 import 'services/bilibili_service.dart';
 import 'services/windows_clipboard_link_service.dart';
 
-/// 焦点哔哩的根组件，统一配置主题、路由和调试标记。
+/// Focubili-UIX的根组件，统一配置主题、路由和调试标记。
 class FocuBiliApp extends StatefulWidget {
   /// 创建应用根组件；测试可以传入可控时钟的专注控制器。
   const FocuBiliApp({
@@ -230,7 +230,7 @@ class _FocuBiliAppState extends State<FocuBiliApp> with WidgetsBindingObserver {
         context: dialogContext,
         builder: (BuildContext context) => AlertDialog(
           title: const Text('打开剪贴板中的 B站视频？'),
-          content: Text('检测到视频 ${target.bvid}，是否使用焦点哔哩打开？'),
+          content: Text('检测到视频 ${target.bvid}，是否使用Focubili-UIX打开？'),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -426,7 +426,7 @@ class _FocuBiliAppState extends State<FocuBiliApp> with WidgetsBindingObserver {
     return MaterialApp(
       navigatorKey: _navigatorKey,
       scaffoldMessengerKey: _scaffoldMessengerKey,
-      title: '焦点哔哩',
+      title: 'Focubili-UIX',
       debugShowCheckedModeBanner: false,
       locale: const Locale('zh', 'CN'),
       supportedLocales: const <Locale>[Locale('zh', 'CN')],

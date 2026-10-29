@@ -1,5 +1,5 @@
-#define AppName "焦点哔哩"
-#define AppPublisher "L1Xu4n"
+#define AppName "Focubili-UIX"
+#define AppPublisher "ningqi24"
 #define AppExecutable "FocuBili.exe"
 
 #ifndef AppVersion
@@ -24,10 +24,10 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher={#AppPublisher}
-AppPublisherURL=https://github.com/L1Xu4n/FocuBili
-AppSupportURL=https://github.com/L1Xu4n/FocuBili/issues
-AppUpdatesURL=https://github.com/L1Xu4n/FocuBili/releases
-DefaultDirName={localappdata}\Programs\FocuBili
+AppPublisherURL=https://github.com/ningqi24/FocuBili-UI
+AppSupportURL=https://github.com/ningqi24/FocuBili-UI/issues
+AppUpdatesURL=https://github.com/ningqi24/FocuBili-UI/releases
+DefaultDirName={localappdata}\Programs\Focubili-UIX
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
@@ -35,7 +35,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.17763
 OutputDir={#OutputDir}
-OutputBaseFilename=FocuBili-v{#AppVersion}-windows-x64-setup
+OutputBaseFilename=Focubili-UIX-v{#AppVersion}-windows-x64-setup
 SetupIconFile=..\runner\resources\app_icon.ico
 UninstallDisplayIcon={app}\{#AppExecutable}
 LicenseFile=..\..\LICENSE
@@ -47,9 +47,9 @@ CloseApplications=yes
 RestartApplications=no
 AppMutex=FocuBili.SingleInstance
 SetupLogging=yes
-VersionInfoCompany=FocuBili
-VersionInfoDescription=焦点哔哩 Windows 安装程序
-VersionInfoProductName=焦点哔哩
+VersionInfoCompany=ningqi24
+VersionInfoDescription=Focubili-UIX Windows 安装程序
+VersionInfoProductName=Focubili-UIX
 VersionInfoProductVersion={#AppVersion}
 VersionInfoVersion={#AppVersion}.{#AppBuild}
 ChangesAssociations=no
@@ -141,10 +141,10 @@ chinesesimplified.StatusUninstalling=正在卸载 %1...
 [CustomMessages]
 chinesesimplified.AdditionalShortcuts=附加快捷方式：
 chinesesimplified.CreateDesktopIcon=创建桌面快捷方式
-chinesesimplified.LaunchFocuBili=启动焦点哔哩
+chinesesimplified.LaunchFocuBili=启动 Focubili-UIX
 english.AdditionalShortcuts=Additional shortcuts:
 english.CreateDesktopIcon=Create a desktop shortcut
-english.LaunchFocuBili=Launch FocuBili
+english.LaunchFocuBili=Launch Focubili-UIX
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalShortcuts}"; Flags: unchecked

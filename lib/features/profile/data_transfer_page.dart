@@ -107,7 +107,7 @@ class _DataTransferPageState extends State<DataTransferPage> {
   /// 导出设置白名单，账号、协议状态和学习数据由各自功能管理。
   Future<void> _exportSettings() => _run(() async {
     await _save(
-      'FocuBili-settings.json',
+      'Focubili-UIX-settings.json',
       await widget.settingsService.exportSettings(),
     );
   });
@@ -139,7 +139,7 @@ class _DataTransferPageState extends State<DataTransferPage> {
     }
     final cookie = await _auth.readCookieForExport();
     await _save(
-      'FocuBili-login-private.json',
+      'Focubili-UIX-login-private.json',
       jsonEncode({
         'format': 'focubili-login',
         'schemaVersion': 1,

@@ -91,7 +91,7 @@ class VideoNoteExportService {
       ArchiveFile.string(
         'README.txt',
         '主文件：$mainName\n图片目录：images/\n'
-            '由焦点哔哩本地导出，共 ${notes.length} 条笔记。',
+            '由Focubili-UIX本地导出，共 ${notes.length} 条笔记。',
       ),
     );
     return VideoNoteExportPackage(
@@ -107,7 +107,7 @@ class VideoNoteExportService {
     List<VideoNote> notes,
     Map<String, String> imagePathsByNoteId,
   ) {
-    final StringBuffer buffer = StringBuffer('# 焦点哔哩时间点笔记\n\n');
+    final StringBuffer buffer = StringBuffer('# Focubili-UIX时间点笔记\n\n');
     for (final VideoNote note in notes) {
       buffer
         ..writeln('## ${_escapeMarkdown(note.title)}')

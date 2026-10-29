@@ -220,7 +220,7 @@ class _AndroidPermissionManagementPageState
         status: overview.requiresAutostartGuide ? '需要在系统页手动确认' : '由系统自动管理',
         granted: !overview.requiresAutostartGuide,
         description: overview.requiresAutostartGuide
-            ? '${overview.manufacturer.isEmpty ? '当前厂商' : overview.manufacturer} 系统不提供自启动状态查询接口。请确认焦点哔哩已开启“后台自启动”，小米/HyperOS 划掉后台后尤其需要。'
+            ? '${overview.manufacturer.isEmpty ? '当前厂商' : overview.manufacturer} 系统不提供自启动状态查询接口。请确认Focubili-UIX已开启“后台自启动”，小米/HyperOS 划掉后台后尤其需要。'
             : '标准 Android 通常不需要单独的自启动开关；如果厂商系统提供该选项，也可从应用详情管理。',
         primaryLabel: '打开设置',
         // 自启动管理函数优先直达小米安全中心，入口缺失时回退应用详情。

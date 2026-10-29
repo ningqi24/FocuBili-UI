@@ -18,11 +18,11 @@ Future<void> handleDoNotDisturbAfterFocusStart(
       builder: (BuildContext dialogContext) => AlertDialog(
         title: const Text('请手动启动 Windows 系统专注'),
         content: const Text(
-          'Windows 只允许获得微软专用授权的应用自动启动系统专注。焦点哔哩当前会保留计时，但需要你在 Windows“时钟”中手动开始系统专注；也可以先打开勿扰设置。',
+          'Windows 只允许获得微软专用授权的应用自动启动系统专注。Focubili-UIX当前会保留计时，但需要你在 Windows“时钟”中手动开始系统专注；也可以先打开勿扰设置。',
         ),
         actions: <Widget>[
           TextButton(
-            // 知道了按钮只关闭说明，当前焦点哔哩专注任务继续运行。
+            // 知道了按钮只关闭说明，当前Focubili-UIX专注任务继续运行。
             onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text('知道了'),
           ),
@@ -45,7 +45,7 @@ Future<void> handleDoNotDisturbAfterFocusStart(
       builder: (BuildContext dialogContext) => AlertDialog(
         title: const Text('需要勿扰模式权限'),
         content: const Text(
-          '你已开启“专注状态将手机设为勿扰模式”。Android 要求你在特殊访问设置中允许焦点哔哩控制勿扰模式；每次开始专注都会重新检查。',
+          '你已开启“专注状态将手机设为勿扰模式”。Android 要求你在特殊访问设置中允许Focubili-UIX控制勿扰模式；每次开始专注都会重新检查。',
         ),
         actions: <Widget>[
           TextButton(

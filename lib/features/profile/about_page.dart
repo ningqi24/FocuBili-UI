@@ -28,9 +28,9 @@ class _AboutPageState extends State<AboutPage> {
   AppUpdateController? _controller;
 
   static final Uri _projectUri = Uri.parse(
-    'https://github.com/L1Xu4n/FocuBili',
+    'https://github.com/ningqi24/FocuBili-UI',
   );
-  static final Uri _ownerUri = Uri.parse('https://github.com/L1Xu4n');
+  static final Uri _ownerUri = Uri.parse('https://github.com/ningqi24');
   static final Uri _qqGroupUri = Uri.parse('https://qm.qq.com/q/szv665wx7W');
 
   /// 连接应用级更新控制器，并在首次进入时补读本机版本信息。
@@ -165,7 +165,7 @@ class _AboutPageState extends State<AboutPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      '焦点哔哩 FocuBili',
+                      'Focubili-UIX',
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
@@ -203,8 +203,8 @@ class _AboutPageState extends State<AboutPage> {
                     subtitle: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('github.com/L1Xu4n/FocuBili'),
-                        Text('给焦点哔哩点个star叭~'),
+                        Text('github.com/ningqi24/FocuBili-UI'),
+                        Text('给Focubili-UIX点个star叭~'),
                       ],
                     ),
                     trailing: const Icon(Icons.open_in_new_rounded),
@@ -216,7 +216,7 @@ class _AboutPageState extends State<AboutPage> {
                     title: const Text('项目负责人'),
                     subtitle: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [Text('@L1Xu4n'), Text('follow看看ta还有什么项目？')],
+                      children: [Text('@ningqi24'), Text('follow看看ta还有什么项目？')],
                     ),
                     trailing: const Icon(Icons.open_in_new_rounded),
                     onTap: () => _open(_ownerUri),
@@ -229,7 +229,7 @@ class _AboutPageState extends State<AboutPage> {
                     subtitle: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('焦点哔哩交流群 · 1055054828'),
+                        Text('Focubili-UIX交流群 · 1055054828'),
                         Text('进来反馈问题，提供建议，相互交流，或是请开发者喝杯奶茶？'),
                       ],
                     ),

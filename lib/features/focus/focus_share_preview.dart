@@ -31,7 +31,7 @@ Future<void> showFocusSessionSharePreview(
     // 分享预览构建函数使用固定设计卡片，保证不同手机生成相同画面比例。
     builder: (BuildContext dialogContext) => _FocusSharePreviewDialog(
       fileName: 'focubili_focus_${session.id}',
-      shareText: '我在焦点哔哩完成了“${session.goal}”专注任务。',
+      shareText: '我在Focubili-UIX完成了“${session.goal}”专注任务。',
       card: FocusSessionShareCard(
         session: session,
         todayFocusedDuration:
@@ -53,7 +53,7 @@ Future<void> showFocusStatisticsSharePreview(
     // 统计预览构建函数冻结当前范围数据，分享过程中记录变化不会改变画面。
     builder: (BuildContext dialogContext) => _FocusSharePreviewDialog(
       fileName: 'focubili_focus_statistics',
-      shareText: '这是我在焦点哔哩的专注统计。',
+      shareText: '这是我在Focubili-UIX的专注统计。',
       card: FocusStatisticsShareCard(snapshot: snapshot),
     ),
   );
@@ -194,7 +194,7 @@ class _FocusSharePreviewDialogState extends State<_FocusSharePreviewDialog> {
   }
 }
 
-/// 生成单次专注完成卡，左上角固定展示焦点哔哩品牌标识。
+/// 生成单次专注完成卡，左上角固定展示Focubili-UIX品牌标识。
 class FocusSessionShareCard extends StatelessWidget {
   /// 创建读取已结束专注记录的分享卡。
   const FocusSessionShareCard({
@@ -449,7 +449,7 @@ class _ShareBrandHeader extends StatelessWidget {
 
   final String kicker;
 
-  /// 组合应用图标、焦点哔哩名称和小型英文标记。
+  /// 组合应用图标、Focubili-UIX名称和小型英文标记。
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -466,7 +466,7 @@ class _ShareBrandHeader extends StatelessWidget {
         const SizedBox(width: 11),
         const Expanded(
           child: Text(
-            '焦点哔哩',
+            'Focubili-UIX',
             style: TextStyle(
               color: Colors.white,
               fontSize: 17,

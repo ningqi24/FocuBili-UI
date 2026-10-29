@@ -239,7 +239,7 @@ class _LoginPageState extends State<LoginPage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const Text('使用手机 B 站 App 扫描官方二维码并确认。FocuBili 不会接触账号密码。'),
+          const Text('使用手机 B 站 App 扫描官方二维码并确认。Focubili-UIX 不会接触账号密码。'),
           const SizedBox(height: 14),
           FilledButton.icon(
             // Windows 扫码按钮函数打开官方二维码并在确认后安全保存会话。
@@ -279,8 +279,8 @@ class _LoginPageState extends State<LoginPage> {
           phoneMode
               ? '手机号登录为默认入口。短信、人机验证和账号信息都在 B 站官方页面中填写。'
               : _isWindows
-              ? '密码不会交给 FocuBili。Windows 官方页面也支持短信和 QQ 登录。'
-              : '密码不会交给 FocuBili。账号、密码和人机验证都由 B 站官方页面直接处理。',
+              ? '密码不会交给 Focubili-UIX。Windows 官方页面也支持短信和 QQ 登录。'
+              : '密码不会交给 Focubili-UIX。账号、密码和人机验证都由 B 站官方页面直接处理。',
         ),
         const SizedBox(height: 14),
         FilledButton.icon(
@@ -635,7 +635,7 @@ class _OfficialQrLoginPageState extends State<_OfficialQrLoginPage> {
                       ),
                     const SizedBox(height: 14),
                     const Text(
-                      '二维码和确认均由 B 站官方接口处理；FocuBili 不会读取你的密码或验证码。',
+                      '二维码和确认均由 B 站官方接口处理；Focubili-UIX 不会读取你的密码或验证码。',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 12),
                     ),

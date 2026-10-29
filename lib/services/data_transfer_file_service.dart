@@ -20,7 +20,7 @@ class DataTransferFileService {
     final path =
         await (saveDialog?.call(name, bytes) ??
             FilePicker.saveFile(
-              dialogTitle: '保存焦点哔哩数据',
+              dialogTitle: '保存Focubili-UIX数据',
               fileName: name,
               type: FileType.custom,
               allowedExtensions: ['json'],

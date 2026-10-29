@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=焦点哔哩
-Name[en]=FocuBili
+Name=Focubili-UIX
+Name[en]=Focubili-UIX
 Comment=专注观看、学习与时间点笔记
 Exec=focubili %u
 Icon=com.focubili.app

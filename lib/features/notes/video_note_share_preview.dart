@@ -61,7 +61,7 @@ class _VideoNoteSharePreviewDialogState
       await widget.shareService.shareBoundary(
         boundaryKey: _boundaryKey,
         fileName: 'focubili_note_${widget.note.id}',
-        text: '来自焦点哔哩的时间点笔记：${widget.note.title}',
+        text: '来自Focubili-UIX的时间点笔记：${widget.note.title}',
         sharePositionOrigin: origin,
       );
       if (mounted && widget.shareService.copiesToClipboard) {
@@ -374,7 +374,7 @@ class _NoteShareBrand extends StatelessWidget {
         const SizedBox(width: 11),
         const Expanded(
           child: Text(
-            '焦点哔哩',
+            'Focubili-UIX',
             style: TextStyle(
               color: Colors.white,
               fontSize: 17,

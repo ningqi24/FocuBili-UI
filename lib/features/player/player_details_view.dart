@@ -945,7 +945,7 @@ extension _PlayerDetailsView on _PlayerPageState {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text('外部网站的内容和安全性不由焦点哔哩控制，请确认链接可信后再继续。'),
+            const Text('外部网站的内容和安全性不由Focubili-UIX控制，请确认链接可信后再继续。'),
             const SizedBox(height: 12),
             SelectableText(
               uri.toString(),

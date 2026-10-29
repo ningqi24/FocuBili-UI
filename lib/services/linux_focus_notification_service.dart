@@ -43,7 +43,7 @@ class LinuxNotificationClient implements WindowsNotificationClient {
   Future<bool> initialize() async {
     final ready = await _plugin.initialize(
       settings: const InitializationSettings(
-        linux: LinuxInitializationSettings(defaultActionName: '打开焦点哔哩'),
+        linux: LinuxInitializationSettings(defaultActionName: '打开Focubili-UIX'),
       ),
     );
     if (ready != true) return false;

@@ -94,7 +94,7 @@ class SettingsTransferService {
         root['format'] != 'focubili-settings' ||
         root['schemaVersion'] != 1 ||
         root['settings'] is! Map) {
-      throw const FormatException('不是受支持的焦点哔哩设置文件');
+      throw const FormatException('不是受支持的Focubili-UIX设置文件');
     }
     final values = <String, Object>{};
     for (final entry in (root['settings'] as Map).entries) {

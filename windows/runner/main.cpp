@@ -58,10 +58,10 @@ bool IsWebViewTitleBarProcess() {
 
 }  // namespace
 
-// 激活已经运行的焦点哔哩窗口，避免用户重复启动多个播放器和计时器实例。
+// 激活已经运行的Focubili-UIX窗口，避免用户重复启动多个播放器和计时器实例。
 void FocusExistingWindow() {
   HWND existing_window =
-      ::FindWindow(L"FLUTTER_RUNNER_WIN32_WINDOW", L"焦点哔哩");
+      ::FindWindow(L"FLUTTER_RUNNER_WIN32_WINDOW", L"Focubili-UIX");
   if (existing_window == nullptr) {
     return;
   }
@@ -109,7 +109,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Size size(1280, 800);
   Win32Window::Point origin = CalculateCenteredOrigin(size);
-  if (!window.Create(L"焦点哔哩", origin, size)) {
+  if (!window.Create(L"Focubili-UIX", origin, size)) {
     if (single_instance_mutex != nullptr) {
       ::CloseHandle(single_instance_mutex);
     }

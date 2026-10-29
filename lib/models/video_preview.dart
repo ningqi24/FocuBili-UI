@@ -323,7 +323,7 @@ class VideoPreview {
       bvid: 'BV1GJ411x7h7',
       cid: 137649199,
       title: '原生播放器框架预览',
-      ownerName: '焦点哔哩',
+      ownerName: 'Focubili-UIX',
       parts: <VideoPart>[
         VideoPart(
           pageNumber: 1,

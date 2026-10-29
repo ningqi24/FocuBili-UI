@@ -33,7 +33,7 @@ Future<void> showFocusReminderBackgroundGuideIfNeeded(
       icon: const Icon(Icons.notifications_active_outlined),
       title: const Text('开启后台提醒保护'),
       content: const Text(
-        '小米/HyperOS 在划掉多任务后台后，只有开启“后台自启动”并把电量策略设为“无限制”，才会允许焦点哔哩在提醒时间重新启动接收器。请到统一权限管理页完成检查。',
+        '小米/HyperOS 在划掉多任务后台后，只有开启“后台自启动”并把电量策略设为“无限制”，才会允许Focubili-UIX在提醒时间重新启动接收器。请到统一权限管理页完成检查。',
       ),
       actions: <Widget>[
         TextButton(

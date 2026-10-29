@@ -22,7 +22,7 @@ class LinuxMediaSession extends DBusObject {
   Future<void> Function(double)? _setRate;
   Future<void> Function(double)? _setVolume;
   double _volume = 1;
-  String _title = '焦点哔哩';
+  String _title = 'Focubili-UIX';
   String _track = 'none';
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
@@ -154,7 +154,7 @@ class LinuxMediaSession extends DBusObject {
       'CanQuit': const DBusBoolean(false),
       'CanRaise': const DBusBoolean(true),
       'HasTrackList': const DBusBoolean(false),
-      'Identity': const DBusString('焦点哔哩'),
+      'Identity': const DBusString('Focubili-UIX'),
       'DesktopEntry': const DBusString('com.focubili.app'),
       'SupportedUriSchemes': DBusArray.string([]),
       'SupportedMimeTypes': DBusArray.string([]),

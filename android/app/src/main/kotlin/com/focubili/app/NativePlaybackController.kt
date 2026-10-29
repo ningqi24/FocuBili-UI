@@ -1160,7 +1160,7 @@ class NativePlaybackController(
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(currentTitle.ifBlank { "离线视频" })
-                    .setArtist(currentOwnerName.ifBlank { "焦点哔哩离线缓存" })
+                    .setArtist(currentOwnerName.ifBlank { "Focubili-UIX离线缓存" })
                     .build(),
             )
             .build()
@@ -2650,7 +2650,7 @@ class NativePlaybackController(
 
     /** 组合视频标题和分P标题，作为系统控制中心显示的媒体标题。 */
     private fun buildMediaDisplayTitle(): String {
-        val title = currentTitle.ifBlank { "焦点哔哩视频" }
+        val title = currentTitle.ifBlank { "Focubili-UIX视频" }
         val partTitle = currentPartTitle.trim()
         return if (partTitle.isEmpty() || partTitle == title) {
             title

@@ -68,7 +68,7 @@ void main() {
       'appearance.theme_mode': 'dark',
       'playback_preferences.long_press_speed': 2.5,
       'app_update.ignored_release':
-          '["L1Xu4n/FocuBili","windows","stable","1.7.1"]',
+          '["ningqi24/FocuBili-UI","windows","stable","1.7.1"]',
       'focubili_bilibili_cookie': 'synthetic-not-a-session',
       'first_launch_user_agreement_2026_07_18_accepted': true,
       'focubili_subscriptions_v1': '{"synthetic":"subscription"}',

@@ -89,16 +89,16 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "FocuBili" "\0"
-            VALUE "FileDescription", "焦点哔哩 Windows 客户端" "\0"
+            VALUE "CompanyName", "ningqi24" "\0"
+            VALUE "FileDescription", "Focubili-UIX Windows 客户端" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "FocuBili" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 L1Xu4n" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 ningqi24" "\0"
             VALUE "OriginalFilename", "FocuBili.exe" "\0"
 #ifdef FOCUBILI_LOCAL_PREVIEW
-            VALUE "ProductName", "焦点哔哩测试版" "\0"
+            VALUE "ProductName", "Focubili-UIX 测试版" "\0"
 #else
-            VALUE "ProductName", "焦点哔哩" "\0"
+            VALUE "ProductName", "Focubili-UIX" "\0"
 #endif
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END

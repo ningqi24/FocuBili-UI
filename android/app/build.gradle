@@ -88,7 +88,7 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.focubili.app"
-        manifestPlaceholders.appLabel = "焦点哔哩"
+        manifestPlaceholders.appLabel = "Focubili-UIX"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         // Flutter 3.44 的 Android 基线为 API 24；Media3 虽支持 API 21，也不能降低 Flutter 的最低版本。
@@ -114,13 +114,13 @@ android {
         debug {
             applicationIdSuffix ".preview"
             versionNameSuffix "-preview"
-            manifestPlaceholders.appLabel = "焦点哔哩 Beta"
+            manifestPlaceholders.appLabel = "Focubili-UIX Beta"
         }
         release {
             if (betaNumber != null) {
                 applicationIdSuffix ".preview"
                 versionNameSuffix "-beta.${betaNumber}"
-                manifestPlaceholders.appLabel = "焦点哔哩 Beta"
+                manifestPlaceholders.appLabel = "Focubili-UIX Beta"
             }
             if (hasReleaseSigning) {
                 signingConfig signingConfigs.release

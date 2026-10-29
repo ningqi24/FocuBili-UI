@@ -41,7 +41,7 @@ class FlutterWindowsNotificationClient implements WindowsNotificationClient {
 
   static const WindowsInitializationSettings _initializationSettings =
       WindowsInitializationSettings(
-        appName: '焦点哔哩',
+        appName: 'Focubili-UIX',
         appUserModelId: 'com.focubili.app',
         guid: '6c1d7306-919c-45c9-bb1d-3dad171a43ef',
       );

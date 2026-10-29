@@ -24,14 +24,12 @@ import 'data_transfer_page.dart';
 
 /// 可选择的主题强调色预设，供设置页以色块形式展示。
 const List<(String, int)> _themeColorOptions = <(String, int)>[
-  ('焦点蓝', 0xFF1677FF),
+  ('静谧蓝', 0xFF2B57C4),
+  ('松绿', 0xFF3E6E63),
+  ('陶土', 0xFF8C5A45),
+  ('暮紫', 0xFF6A5E96),
+  ('石墨', 0xFF47474E),
   ('国庆红', AppTheme.nationalDayRedValue),
-  ('B站粉', 0xFFFB7299),
-  ('玫红', 0xFFC2188B),
-  ('珊瑚橙', 0xFFFF7043),
-  ('翠绿', 0xFF00A870),
-  ('湖蓝', 0xFF00B8D4),
-  ('薰衣草紫', 0xFF7C4DFF),
 ];
 
 /// 标识个性化设置当前显示首页还是某个二级分类页面。
@@ -42,7 +40,7 @@ enum _SettingsLevel {
   appearanceAndApplication,
 }
 
-/// 展示焦点哔哩的个性化选项，并把播放器手势偏好保存在当前设备。
+/// 展示Focubili-UIX的个性化选项，并把播放器手势偏好保存在当前设备。
 class PersonalizationSettingsPage extends StatefulWidget {
   /// 创建个性化设置页；测试可注入内存服务替代真实设备存储。
   const PersonalizationSettingsPage({
@@ -351,7 +349,7 @@ class _PersonalizationSettingsPageState
           builder: (BuildContext dialogContext) => AlertDialog(
             title: const Text('Windows 系统专注需要手动启动'),
             content: const Text(
-              '微软把自动启动系统专注设为受限功能，焦点哔哩当前没有对应授权。开启后，应用会在每次专注开始时提醒你前往 Windows“时钟”手动启动，不会再用注册表模拟开启。',
+              '微软把自动启动系统专注设为受限功能，Focubili-UIX当前没有对应授权。开启后，应用会在每次专注开始时提醒你前往 Windows“时钟”手动启动，不会再用注册表模拟开启。',
             ),
             actions: <Widget>[
               TextButton(
@@ -386,7 +384,7 @@ class _PersonalizationSettingsPageState
         builder: (BuildContext dialogContext) => AlertDialog(
           title: const Text('允许控制勿扰模式'),
           content: const Text(
-            '首次使用需要在 Android 的“勿扰模式访问权限”中允许焦点哔哩。专注视频播放时开启勿扰，用户暂停时恢复；快进、快退产生的短暂缓冲不会反复切换。',
+            '首次使用需要在 Android 的“勿扰模式访问权限”中允许Focubili-UIX。专注视频播放时开启勿扰，用户暂停时恢复；快进、快退产生的短暂缓冲不会反复切换。',
           ),
           actions: <Widget>[
             TextButton(
@@ -987,7 +985,7 @@ class _PersonalizationSettingsPageState
                 : _setWindowsClipboardDetectionEnabled,
             secondary: const Icon(Icons.content_paste_search_rounded),
             title: const Text('检测剪贴板中的 B站链接'),
-            subtitle: const Text('仅在焦点哔哩位于前台时检查；发现可播放视频后先询问，不会自动打开。'),
+            subtitle: const Text('仅在Focubili-UIX位于前台时检查；发现可播放视频后先询问，不会自动打开。'),
           ),
       ],
     );
@@ -1105,7 +1103,7 @@ class _PersonalizationSettingsPageState
                 ? Text(
                     _focusPreferences.enableDoNotDisturb
                         ? '已开启提醒；请在 Windows“时钟”中手动启动系统专注。'
-                        : '关闭后不再提醒；焦点哔哩不会修改 Windows 的全局通知设置。',
+                        : '关闭后不再提醒；Focubili-UIX不会修改 Windows 的全局通知设置。',
                   )
                 : Text(
                     !_focusPreferences.enableDoNotDisturb

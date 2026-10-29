@@ -55,7 +55,7 @@ class VideoNoteShareService {
           XFile(output.path, mimeType: _mimeTypeFor(package.extension)),
         ],
         fileNameOverrides: <String>[package.fileName],
-        text: '焦点哔哩时间点笔记，共 ${package.noteCount} 条。',
+        text: 'Focubili-UIX时间点笔记，共 ${package.noteCount} 条。',
         sharePositionOrigin: sharePositionOrigin,
       ),
     );

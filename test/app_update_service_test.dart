@@ -57,7 +57,7 @@ void main() {
     final AppUpdateService service = AppUpdateService(
       releaseLoader: () async => <String, Object?>{
         'tag_name': 'v0.3.0',
-        'html_url': 'https://github.com/L1Xu4n/FocuBili/releases/tag/v0.3.0',
+        'html_url': 'https://github.com/ningqi24/FocuBili-UI/releases/tag/v0.3.0',
         'body': '''
 普通发布说明不会直接显示。
 <!-- focubili-update-summary:start -->
@@ -91,17 +91,17 @@ void main() {
       targetPlatform: AppUpdateTargetPlatform.windows,
       releaseLoader: () async => <String, Object?>{
         'tag_name': 'v1.4.0',
-        'html_url': 'https://github.com/L1Xu4n/FocuBili/releases/tag/v1.4.0',
+        'html_url': 'https://github.com/ningqi24/FocuBili-UI/releases/tag/v1.4.0',
         'assets': <Map<String, Object?>>[
           <String, Object?>{
             'name': 'FocuBili-v1.4.0-release.apk',
             'browser_download_url':
-                'https://github.com/L1Xu4n/FocuBili/releases/download/v1.4.0/FocuBili-v1.4.0-release.apk',
+                'https://github.com/ningqi24/FocuBili-UI/releases/download/v1.4.0/FocuBili-v1.4.0-release.apk',
           },
           <String, Object?>{
             'name': 'FocuBili-v1.4.0-x64.msix',
             'browser_download_url':
-                'https://github.com/L1Xu4n/FocuBili/releases/download/v1.4.0/FocuBili-v1.4.0-x64.msix',
+                'https://github.com/ningqi24/FocuBili-UI/releases/download/v1.4.0/FocuBili-v1.4.0-x64.msix',
           },
         ],
       },
@@ -122,12 +122,12 @@ void main() {
           <String, Object?>{
             'name': 'FocuBili-v1.4.0-release.apk',
             'browser_download_url':
-                'https://example.com/L1Xu4n/FocuBili/releases/download/v1.4.0/FocuBili-v1.4.0-release.apk',
+                'https://example.com/ningqi24/FocuBili-UI/releases/download/v1.4.0/FocuBili-v1.4.0-release.apk',
           },
           <String, Object?>{
             'name': 'FocuBili-v1.4.0-x64.msix',
             'browser_download_url':
-                'https://github.com/L1Xu4n/FocuBili/releases/download/v1.4.0/FocuBili-v1.4.0-x64.msix',
+                'https://github.com/ningqi24/FocuBili-UI/releases/download/v1.4.0/FocuBili-v1.4.0-x64.msix',
           },
         ],
       },

@@ -124,10 +124,10 @@ class AppUpdateService {
        _targetPlatform = targetPlatform ?? _currentTargetPlatform();
 
   static final Uri releasesUri = Uri.parse(
-    'https://github.com/L1Xu4n/FocuBili/releases',
+    'https://github.com/ningqi24/FocuBili-UI/releases',
   );
   static final Uri latestReleaseApiUri = Uri.parse(
-    'https://api.github.com/repos/L1Xu4n/FocuBili/releases/latest',
+    'https://api.github.com/repos/ningqi24/FocuBili-UI/releases/latest',
   );
   static const String releaseSummaryStartMarker =
       '<!-- focubili-update-summary:start -->';
@@ -166,7 +166,7 @@ class AppUpdateService {
         currentVersion: currentVersion,
         latestVersion: latestVersion,
         updateIdentity: jsonEncode([
-          'L1Xu4n/FocuBili',
+          'ningqi24/FocuBili-UI',
           _targetPlatform.name,
           release['prerelease'] == true || latestVersion.contains('-')
               ? 'prerelease'
@@ -248,7 +248,7 @@ class AppUpdateService {
         (!uri.hasPort || uri.port == 443) &&
         uri.fragment.isEmpty &&
         uri.path.toLowerCase().startsWith(
-          '/l1xu4n/focubili/releases/download/',
+          '/ningqi24/focubili-ui/releases/download/',
         );
   }
 

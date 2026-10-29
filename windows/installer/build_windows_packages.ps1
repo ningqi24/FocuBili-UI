@@ -178,10 +178,10 @@ if (-not (Test-Path -LiteralPath (Join-Path $releaseDirectory 'FocuBili.exe') -P
 }
 
 $versionInfo = Get-FocuBiliVersion -PubspecPath $pubspecPath
-$portableName = "FocuBili-v$($versionInfo.Version)-windows-x64-portable"
+$portableName = "Focubili-UIX-v$($versionInfo.Version)-windows-x64-portable"
 $portableDirectory = Join-Path $outputDirectory $portableName
 $portableArchive = Join-Path $outputDirectory "$portableName.zip"
-$setupPath = Join-Path $outputDirectory "FocuBili-v$($versionInfo.Version)-windows-x64-setup.exe"
+$setupPath = Join-Path $outputDirectory "Focubili-UIX-v$($versionInfo.Version)-windows-x64-setup.exe"
 
 New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 Remove-GeneratedItem -Path $portableDirectory -OutputRoot $outputDirectory

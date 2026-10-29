@@ -94,7 +94,7 @@ Future<void> _prepareWindowsDesktop({
       minimumSize: minimumSize,
       center: true,
       backgroundColor: Color(0xFFF7F8FC),
-      title: '焦点哔哩',
+      title: 'Focubili-UIX',
     ),
   );
   await windowManager.show();
@@ -104,10 +104,10 @@ Future<void> _prepareWindowsDesktop({
   }
 }
 
-/// 初始化 Flutter 绑定、系统栏样式，并启动焦点哔哩应用。
+/// 初始化 Flutter 绑定、系统栏样式，并启动Focubili-UIX应用。
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  // WebView2 子窗口进程只绘制插件标题栏，不重复初始化完整焦点哔哩应用。
+  // WebView2 子窗口进程只绘制插件标题栏，不重复初始化完整Focubili-UIX应用。
   if (runWebViewTitleBarWidget(args)) {
     return;
   }

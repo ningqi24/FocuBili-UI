@@ -80,7 +80,7 @@ class _SubscriptionIntroductionState extends State<SubscriptionIntroduction>
         title: const Text('开启焦点订阅？'),
         content: const SingleChildScrollView(
           child: Text(
-            '焦点订阅功能允许你在焦点哔哩内订阅一些UP主和订阅合集，APP将检查订阅源并通过系统通知或首页卡片推送给你，如果你不需要，点击下面的按钮，你的首页会像往常一样简洁。当你需要焦点订阅时，在“我的页面”仍然能够再次开启',
+            '焦点订阅功能允许你在Focubili-UIX内订阅一些UP主和订阅合集，APP将检查订阅源并通过系统通知或首页卡片推送给你，如果你不需要，点击下面的按钮，你的首页会像往常一样简洁。当你需要焦点订阅时，在“我的页面”仍然能够再次开启',
           ),
         ),
         actions: [

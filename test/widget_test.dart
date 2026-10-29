@@ -862,7 +862,7 @@ VideoPreview _createMultiPartVideo() {
     bvid: 'BV1GJ411x7h7',
     cid: 137649199,
     title: '多P测试视频',
-    ownerName: '焦点哔哩',
+    ownerName: 'Focubili-UIX',
     duration: Duration(minutes: 2),
     parts: <VideoPart>[
       VideoPart(
@@ -887,7 +887,7 @@ VideoPreview _createLongPartTitleVideo() {
     bvid: 'BV1GJ411x7h7',
     cid: 137649199,
     title: '超长分P标题测试视频',
-    ownerName: '焦点哔哩',
+    ownerName: 'Focubili-UIX',
     parts: <VideoPart>[
       VideoPart(
         pageNumber: 1,
@@ -911,7 +911,7 @@ VideoPreview _createLongTitleVideo() {
     bvid: 'BV1GJ411x7h7',
     cid: 137649199,
     title: 'J26最新版，包含所有干货！七天就能从小白到大神！少走99%的弯路！存下吧！很难找全的！',
-    ownerName: '焦点哔哩',
+    ownerName: 'Focubili-UIX',
     parts: <VideoPart>[
       VideoPart(
         pageNumber: 1,
@@ -1245,7 +1245,7 @@ void main() {
     final BilibiliVideoInfoService service = BilibiliVideoInfoService();
 
     await expectLater(
-      service.lookupVideo('焦点哔哩'),
+      service.lookupVideo('Focubili-UIX'),
       throwsA(isA<BilibiliLookupException>()),
     );
   });
@@ -1335,7 +1335,7 @@ void main() {
     );
     expect(app.locale, const Locale('zh', 'CN'));
     expect(app.themeMode, ThemeMode.system);
-    expect(find.text('焦点哔哩'), findsWidgets);
+    expect(find.text('Focubili-UIX'), findsWidgets);
     expect(find.byKey(const Key('home-start-search')), findsOneWidget);
     expect(find.text('首页'), findsOneWidget);
     expect(find.text('我的'), findsOneWidget);

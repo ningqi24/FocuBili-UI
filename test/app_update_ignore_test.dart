@@ -12,12 +12,12 @@ class _Version implements AppVersionProvider {
 Map<String, Object?> _release(String version, {bool prerelease = false}) => {
   'tag_name': 'v$version',
   'prerelease': prerelease,
-  'html_url': 'https://github.com/L1Xu4n/FocuBili/releases/tag/v$version',
+  'html_url': 'https://github.com/ningqi24/FocuBili-UI/releases/tag/v$version',
   'assets': [
     {
       'name': 'FocuBili-v$version-android.apk',
       'browser_download_url':
-          'https://github.com/L1Xu4n/FocuBili/releases/download/v$version/FocuBili-v$version-android.apk',
+          'https://github.com/ningqi24/FocuBili-UI/releases/download/v$version/FocuBili-v$version-android.apk',
     },
   ],
 };
