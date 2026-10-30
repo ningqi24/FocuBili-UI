@@ -546,7 +546,7 @@ extension _PlayerDetailsView on _PlayerPageState {
     }
   }
 
-  /// 创建可执行互动按钮，忙碌时显示固定尺寸进度指示。
+  /// 创建可执行互动动作，忙碌时显示固定尺寸进度指示，选中态使用强调色。
   Widget _buildInteractionStat({
     required Key key,
     required IconData icon,
@@ -558,39 +558,14 @@ extension _PlayerDetailsView on _PlayerPageState {
   }) {
     final bool busy = _interactionAction == action;
     final bool disabled = _interactionLoading || _interactionAction != null;
-    return Expanded(
-      child: TextButton(
-        key: key,
-        onPressed: disabled ? null : onPressed,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            busy
-                ? const SizedBox.square(
-                    dimension: 25,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(
-                    icon,
-                    size: 25,
-                    color: selected
-                        ? Theme.of(context).colorScheme.primary
-                        : null,
-                  ),
-            const SizedBox(height: 4),
-            Text(
-              value > 0 ? _formatCount(value) : label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-      ),
+    return PlayerLibraryAction(
+      key: key,
+      icon: icon,
+      label: value > 0 ? _formatCount(value) : label,
+      tooltip: label,
+      busy: busy,
+      selected: selected,
+      onPressed: disabled ? null : onPressed,
     );
   }
 
@@ -599,22 +574,66 @@ extension _PlayerDetailsView on _PlayerPageState {
     return (baseValue + delta).clamp(0, 1 << 31);
   }
 
-  /// 创建分享等仍为只读统计的展示项，不向用户伪造尚未接入的写操作。
-  Widget _buildReadOnlyStat(IconData icon, String label, int value) {
-    return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, size: 25),
-          const SizedBox(height: 4),
-          Text(
-            value > 0 ? _formatCount(value) : label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall,
+  /// 创建播放器底部一行等分的动作条：赞、币、藏、清单、笔记。
+  ///
+  /// 离线缓存与软件收藏仍与四项本机动作同排等宽，保证既有布局锁不被破坏。
+  Widget _buildPlayerActionRow() {
+    final VideoStats stats = _activeVideo.stats;
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: _buildInteractionStat(
+            key: const Key('video-like-button'),
+            icon: Icons.thumb_up_alt_outlined,
+            label: _interactionState.isLiked ? '已点赞' : '点赞',
+            value: _adjustedInteractionCount(stats.likeCount, _likeCountDelta),
+            action: 'like',
+            selected: _interactionState.isLiked,
+            onPressed: _activeVideo.aid > 0 ? _toggleVideoLike : null,
           ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: _buildInteractionStat(
+            key: const Key('video-coin-button'),
+            icon: Icons.monetization_on_outlined,
+            label: _interactionState.isCoined ? '已投币' : '投币',
+            value: _adjustedInteractionCount(stats.coinCount, _coinCountDelta),
+            action: 'coin',
+            selected: _interactionState.isCoined,
+            onPressed:
+                _activeVideo.aid > 0 && _interactionState.coinCount < 2
+                ? _addVideoCoin
+                : null,
+          ),
+        ),
+        Expanded(
+          child: _buildInteractionStat(
+            key: const Key('video-favorite-button'),
+            icon: Icons.favorite_border,
+            label: _interactionState.isFavorited ? '已收藏' : '收藏',
+            value: _adjustedInteractionCount(
+              stats.favoriteCount,
+              _favoriteCountDelta,
+            ),
+            action: 'favorite',
+            selected: _interactionState.isFavorited,
+            onPressed: _activeVideo.aid > 0 ? _toggleVideoFavorite : null,
+          ),
+        ),
+        Expanded(child: _buildCurrentVideoLearningListButton()),
+        Expanded(
+          child: PlayerLibraryAction(
+            key: const Key('portrait-note-button'),
+            // 竖屏记笔记按钮函数在播放器下方打开编辑区，并固定播放器高度。
+            onPressed: () => unawaited(_openVideoNotes()),
+            icon: Icons.edit_note,
+            tooltip: '记笔记',
+            label: '笔记',
+          ),
+        ),
+        Expanded(child: _buildOfflineDownloadButton()),
+        Expanded(child: _buildAppFavoriteButton()),
+      ],
     );
   }
 
@@ -649,6 +668,12 @@ extension _PlayerDetailsView on _PlayerPageState {
             _DetailMeta(
               icon: Icons.calendar_today_outlined,
               text: _formatPublishedAt(_activeVideo.publishedAt),
+            ),
+            _DetailMeta(
+              icon: Icons.share_outlined,
+              text: stats.shareCount > 0
+                  ? _formatCount(stats.shareCount)
+                  : '分享',
             ),
           ],
         ),
@@ -691,56 +716,6 @@ extension _PlayerDetailsView on _PlayerPageState {
                 .toList(growable: false),
           ),
         ],
-        const SizedBox(height: 18),
-        Row(
-          children: <Widget>[
-            _buildInteractionStat(
-              key: const Key('video-like-button'),
-              icon: _interactionState.isLiked
-                  ? Icons.thumb_up_alt
-                  : Icons.thumb_up_alt_outlined,
-              label: _interactionState.isLiked ? '已点赞' : '点赞',
-              value: _adjustedInteractionCount(
-                stats.likeCount,
-                _likeCountDelta,
-              ),
-              action: 'like',
-              selected: _interactionState.isLiked,
-              onPressed: _activeVideo.aid > 0 ? _toggleVideoLike : null,
-            ),
-            _buildInteractionStat(
-              key: const Key('video-coin-button'),
-              icon: _interactionState.isCoined
-                  ? Icons.paid
-                  : Icons.paid_outlined,
-              label: _interactionState.isCoined ? '已投币' : '投币',
-              value: _adjustedInteractionCount(
-                stats.coinCount,
-                _coinCountDelta,
-              ),
-              action: 'coin',
-              selected: _interactionState.isCoined,
-              onPressed: _activeVideo.aid > 0 && _interactionState.coinCount < 2
-                  ? _addVideoCoin
-                  : null,
-            ),
-            _buildInteractionStat(
-              key: const Key('video-favorite-button'),
-              icon: _interactionState.isFavorited
-                  ? Icons.star
-                  : Icons.star_border_rounded,
-              label: _interactionState.isFavorited ? '已收藏' : '收藏',
-              value: _adjustedInteractionCount(
-                stats.favoriteCount,
-                _favoriteCountDelta,
-              ),
-              action: 'favorite',
-              selected: _interactionState.isFavorited,
-              onPressed: _activeVideo.aid > 0 ? _toggleVideoFavorite : null,
-            ),
-            _buildReadOnlyStat(Icons.share_outlined, '分享', stats.shareCount),
-          ],
-        ),
       ],
     );
   }
@@ -759,9 +734,7 @@ extension _PlayerDetailsView on _PlayerPageState {
       onPressed: busy
           ? null
           : () => unawaited(_handleCurrentVideoLearningListTap()),
-      icon: currentEntry == null
-          ? Icons.playlist_add_rounded
-          : Icons.playlist_add_check_rounded,
+      icon: Icons.playlist_add,
       label: _learningListLoading
           ? '读取中…'
           : currentEntry == null

@@ -390,46 +390,8 @@ extension _PlayerCollectionView on _PlayerPageState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const SizedBox(height: 4),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final scale = MediaQuery.textScalerOf(context).scale(12) / 12;
-                  final columns = constraints.maxWidth >= 4 * 64 * scale
-                      ? 4
-                      : 2;
-                  final width =
-                      (constraints.maxWidth - (columns - 1) * 8) / columns;
-                  final actions = <Widget>[
-                    _buildCurrentVideoLearningListButton(),
-                    _buildOfflineDownloadButton(),
-                    _buildAppFavoriteButton(),
-                    PlayerLibraryAction(
-                      key: const Key('portrait-note-button'),
-                      // 竖屏记笔记按钮函数在播放器下方打开编辑区，并固定播放器高度。
-                      onPressed: () => unawaited(_openVideoNotes()),
-                      icon: Icons.edit_note_rounded,
-                      tooltip: '记笔记',
-                      label: '记笔记',
-                    ),
-                  ];
-                  return Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      for (final action in actions)
-                        SizedBox(width: width, child: action),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-          Divider(
-            height: 16,
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
+          _buildPlayerActionRow(),
+          Divider(height: 16, color: AppTheme.ruleOf(context)),
           _buildVideoDescription(),
           if (_activeVideo.parts.length > 1) ...<Widget>[
             const SizedBox(height: 18),

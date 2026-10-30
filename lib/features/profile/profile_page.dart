@@ -4,10 +4,16 @@ import 'package:flutter/material.dart';
 
 import '../../core/layout/adaptive_layout.dart';
 import '../../core/router/app_router.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/widgets/editable_card_board.dart';
+import '../../models/focus_session.dart';
 import '../../services/dashboard_layout_service.dart';
 import '../../services/bilibili_auth_service.dart';
 import '../../services/app_update_service.dart';
+import '../../services/focus_session_service.dart';
+import '../../services/learning_list_service.dart';
+import '../../services/video_note_service.dart';
+import '../learning/learning_list_page.dart';
 import 'favorite_folders_page.dart';
 import 'app_favorite_folders_page.dart';
 import 'followed_creators_page.dart';
@@ -48,13 +54,61 @@ class _ProfilePageState extends State<ProfilePage> {
   final ScrollController _scrollController = ScrollController();
   BilibiliSessionState _session = const BilibiliSessionState.signedOut();
   bool _loadingAccount = true;
+  Duration _weeklyFocusDuration = Duration.zero;
+  int _learningListCount = 0;
+  int _noteCount = 0;
 
-  /// 页面创建后读取 WebView 中已有的登录会话。
+  /// 页面创建后读取 WebView 中已有的登录会话和本机学习统计。
   @override
   void initState() {
     super.initState();
     _authService = widget.authService ?? BilibiliAuthService();
     _loadAccount();
+    _loadStatistics();
+  }
+
+  /// 读取本周专注、学习清单与笔记的真实计数；读取失败保持零值不编造数据。
+  Future<void> _loadStatistics() async {
+    Duration weeklyFocus = Duration.zero;
+    int learningListCount = 0;
+    int noteCount = 0;
+    try {
+      // 本周口径与首页计时卡一致：周一起算，只累计已结束记录的真实时长。
+      final DateTime now = DateTime.now();
+      final DateTime weekStart = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: now.weekday - 1));
+      final FocusStoredState state = await FocusSessionService().loadState();
+      for (final FocusSession session in state.history) {
+        final DateTime? finished = session.finishedAt?.toLocal();
+        if (finished == null || finished.isBefore(weekStart)) {
+          continue;
+        }
+        weeklyFocus += session.accumulatedFocusDuration;
+      }
+    } catch (_) {
+      // 专注记录不可读时统计保持零值。
+    }
+    try {
+      learningListCount = (await LearningListService().loadEntries()).length;
+    } catch (_) {
+      // 清单读取失败时统计保持零值。
+    }
+    try {
+      noteCount = (await VideoNoteService().loadNotes()).length;
+    } catch (_) {
+      // 笔记读取失败时统计保持零值。
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _weeklyFocusDuration = weeklyFocus;
+      _learningListCount = learningListCount;
+      _noteCount = noteCount;
+    });
   }
 
   /// 验证当前 Cookie 并保留“未登录、过期、网络错误”三种不同页面状态。
@@ -250,6 +304,17 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 打开本机学习清单，返回后刷新统计中的清单计数。
+  Future<void> _openLearningList() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        // 清单页面构建函数只读写本机任务，不访问账号数据。
+        builder: (BuildContext context) => const LearningListPage(),
+      ),
+    );
+    await _loadStatistics();
+  }
+
   /// 根据当前会话状态生成账号卡片标题，网络错误不会伪装成已退出登录。
   String _accountTitle() {
     switch (_session.status) {
@@ -346,16 +411,22 @@ class _ProfilePageState extends State<ProfilePage> {
   /// 根据当前账号状态和目标尺寸创建头像，远程图片失败时回退为本地图标。
   Widget _buildAvatar({double radius = 30, Key? key}) {
     final String avatarUrl = _session.account?.avatarUrl ?? '';
+    // 头像使用中性凹槽底色，不加彩色描边圆环。
+    final Color background = AppTheme.sunkenOf(context);
+    final Color foreground = Theme.of(context).colorScheme.onSurfaceVariant;
     if (avatarUrl.isEmpty) {
       return CircleAvatar(
         key: key,
         radius: radius,
+        backgroundColor: background,
+        foregroundColor: foreground,
         child: Icon(Icons.person_rounded, size: radius * 1.1),
       );
     }
     return CircleAvatar(
       key: key,
       radius: radius,
+      backgroundColor: background,
       child: ClipOval(
         child: AppNetworkImage(
           imageUrl: avatarUrl,
@@ -384,72 +455,154 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// 根据卡片实际宽度和文字比例排列账号摘要，宽屏把操作并入同一行。
-  Widget _buildAccountCard() {
-    return Card(
-      key: const Key('profile-account-card'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: LayoutBuilder(
-          // 账号布局函数以父约束判断空间，给大字账号摘要预留足够宽度。
-          builder: (BuildContext context, BoxConstraints constraints) {
-            final double textScale =
-                MediaQuery.textScalerOf(context).scale(18) / 18;
-            final bool inline =
-                constraints.maxWidth >= 520 * (textScale > 1 ? textScale : 1);
-            final Widget summary = Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _buildAvatar(radius: 26),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        _accountTitle(),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(_accountDescription()),
-                    ],
-                  ),
+  /// 三项周统计并排：大数字用等宽粗体，标签用中性灰小字。
+  Widget _buildWeeklyStats() {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    Widget statistic(String value, String label) {
+      return Expanded(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const <FontFeature>[
+                    FontFeature.tabularFigures(),
+                  ],
                 ),
-              ],
-            );
-            if (inline) {
-              return Row(
-                children: <Widget>[
-                  Expanded(child: summary),
-                  const SizedBox(width: 12),
-                  _buildAccountAction(),
-                ],
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                summary,
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _buildAccountAction(),
+              ),
+            ),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
                 ),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         ),
-      ),
+      );
+    }
+
+    return Row(
+      children: <Widget>[
+        statistic(_formatFocusDuration(_weeklyFocusDuration), '本周专注'),
+        statistic('$_learningListCount', '学习清单'),
+        statistic('$_noteCount', '笔记'),
+      ],
     );
   }
 
-  /// 以明确稳定编号登记全部功能入口，默认顺序先本机内容再账号与设置。
+  /// 把本周专注时长格式化为紧凑大数字，例如 9.2h 或 45m。
+  String _formatFocusDuration(Duration duration) {
+    final int totalMinutes = duration.inMinutes;
+    if (totalMinutes < 60) {
+      return '$totalMinutes m';
+    }
+    final double hours =
+        duration.inMilliseconds / const Duration(hours: 1).inMilliseconds;
+    return '${hours.toStringAsFixed(1)}h';
+  }
+
+  /// 根据卡片实际宽度和文字比例排列账号摘要，宽屏把操作并入同一行。
+  Widget _buildAccountCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Card(
+          key: const Key('profile-account-card'),
+          margin: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                LayoutBuilder(
+                  // 账号布局函数以父约束判断空间，给大字账号摘要预留足够宽度。
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    final double textScale =
+                        MediaQuery.textScalerOf(context).scale(18) / 18;
+                    final bool inline =
+                        constraints.maxWidth >=
+                        520 * (textScale > 1 ? textScale : 1);
+                    final Widget summary = Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        _buildAvatar(radius: 24),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                _accountTitle(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _accountDescription(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                    if (inline) {
+                      return Row(
+                        children: <Widget>[
+                          Expanded(child: summary),
+                          const SizedBox(width: 12),
+                          _buildAccountAction(),
+                        ],
+                      );
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        summary,
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: _buildAccountAction(),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildWeeklyStats(),
+              ],
+            ),
+          ),
+        ),
+        // 分组标题紧贴账号卡下沿，标出下方“学习资产”入口分组。
+        const _SectionLabel('学习资产', padding: EdgeInsets.only(top: 12)),
+      ],
+    );
+  }
+
+  /// 以明确稳定编号登记全部功能入口，并按“学习资产 / 内容与系统”分组排列。
   List<_ProfileTile> _buildFeatureTiles({required bool hasUpdate}) {
     return <_ProfileTile>[
       _ProfileTile(
@@ -474,6 +627,13 @@ class _ProfilePageState extends State<ProfilePage> {
         onTap: () => _openAppFavoriteFolders(),
       ),
       _ProfileTile(
+        icon: Icons.checklist_rounded,
+        title: '学习清单',
+        id: 'learning-list',
+        // 学习清单入口函数打开本机任务清单，返回后刷新统计计数。
+        onTap: () => _openLearningList(),
+      ),
+      _ProfileTile(
         icon: Icons.edit_note_rounded,
         title: '时间点笔记',
         id: 'video-notes',
@@ -488,18 +648,20 @@ class _ProfilePageState extends State<ProfilePage> {
         onTap: () => Navigator.of(context).pushNamed(AppRoutes.focusStatistics),
       ),
       _ProfileTile(
-        icon: Icons.star_outline_rounded,
-        title: '我的收藏',
-        id: 'favorites',
-        // 收藏入口函数打开真实收藏夹列表，具体会话错误由目标页面明确显示。
-        onTap: () => _openFavoriteFolders(),
-      ),
-      _ProfileTile(
         icon: Icons.subscriptions_outlined,
         title: '我的订阅',
         id: 'subscriptions',
         // 订阅入口函数只展示由多支独立视频组成的 UGC 合集。
         onTap: () => _openSubscribedCollections(),
+      ),
+      _ProfileTile(
+        icon: Icons.star_outline_rounded,
+        title: '我的收藏',
+        id: 'favorites',
+        sectionTitle: '内容与系统',
+        fullWidth: true,
+        // 收藏入口函数打开真实收藏夹列表，具体会话错误由目标页面明确显示。
+        onTap: () => _openFavoriteFolders(),
       ),
       _ProfileTile(
         icon: Icons.people_outline_rounded,
@@ -544,6 +706,7 @@ class _ProfilePageState extends State<ProfilePage> {
           title: tile.title,
           icon: tile.icon,
           required: tile.id == 'settings',
+          fullWidth: tile.fullWidth,
           // 功能卡构建函数保留入口原有导航及更新提示。
           builder: (_) => tile,
         ),
@@ -615,15 +778,17 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-/// 统一“我的”页面中的功能入口样式。
+/// 统一“我的”页面中的紧凑功能入口行。
 class _ProfileTile extends StatelessWidget {
-  /// 创建带图标、标题和点击回调的账号功能入口。
+  /// 创建带图标徽标、标题和点击回调的功能入口行。
   const _ProfileTile({
     required this.id,
     required this.icon,
     required this.title,
     required this.onTap,
     this.showBadge = false,
+    this.fullWidth = false,
+    this.sectionTitle,
   });
 
   final String id;
@@ -632,32 +797,102 @@ class _ProfileTile extends StatelessWidget {
   final VoidCallback onTap;
   final bool showBadge;
 
-  /// 创建带圆角卡片、图标和箭头的单个入口。
+  /// 是否独占整行；分组起始条目用它承载分组标题。
+  final bool fullWidth;
+
+  /// 分组标题，骑在本行卡片上沿标出所属分组。
+  final String? sectionTitle;
+
+  /// 创建约 46 高的紧凑行：凹槽图标徽标、标题、更新圆点和尾部箭头。
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (showBadge) ...<Widget>[
-              Container(
-                key: const Key('profile-settings-update-dot'),
-                width: 9,
-                height: 9,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.error,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            const Icon(Icons.chevron_right_rounded),
-          ],
-        ),
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final Widget row = Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
         onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 46),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: AppTheme.sunkenOf(context),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(icon, size: 18, color: colors.onSurfaceVariant),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (showBadge) ...<Widget>[
+                  Container(
+                    key: const Key('profile-settings-update-dot'),
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      color: colors.error,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: colors.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    final String? heading = sectionTitle;
+    if (heading == null) {
+      return row;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _SectionLabel(heading, padding: const EdgeInsets.only(bottom: 8)),
+        row,
+      ],
+    );
+  }
+}
+
+/// 中性灰分组标题，骑在分组第一张卡片盒上标出分组范围。
+class _SectionLabel extends StatelessWidget {
+  /// 创建可配置留白的分组标题。
+  const _SectionLabel(this.title, {this.padding = EdgeInsets.zero});
+
+  final String title;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding,
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

@@ -212,6 +212,8 @@ class _CollapsingPlayerHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
+    // ignore: avoid_print
+    print('PROBE header shrinkOffset=$shrinkOffset max=$maximumHeight');
     return ClipRect(child: SizedBox.expand(child: child));
   }
 

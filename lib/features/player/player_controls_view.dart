@@ -85,7 +85,7 @@ extension _PlayerControlsView on _PlayerPageState {
     );
   }
 
-  /// 在非全屏详情页恢复横向分P列表，用户不必先进入全屏才能选择分P。
+  /// 在非全屏详情页恢复横向分P chip 行，用户不必先进入全屏才能选择分P。
   Widget _buildPartSelector() {
     final List<VideoPart> parts = _orderedParts();
     if (parts.length <= 1) {
@@ -113,24 +113,59 @@ extension _PlayerControlsView on _PlayerPageState {
           ],
         ),
         const SizedBox(height: 6),
-        SizedBox(
-          height: 58,
-          child: HorizontalMouseScroll(
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: parts.length,
-              separatorBuilder: (BuildContext context, int index) =>
-                  const SizedBox(width: 8),
-              itemBuilder: (BuildContext context, int index) {
-                return SizedBox(
-                  width: 190,
-                  child: _buildPartCard(parts[index], compact: true),
-                );
-              },
+        HorizontalMouseScroll(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: <Widget>[
+                for (final VideoPart part in parts)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _buildPartChip(part),
+                  ),
+              ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  /// 创建一个横向滑动的分P chip，当前集使用主题配置的 tonal 选中态。
+  Widget _buildPartChip(VideoPart part) {
+    final bool selected = part.cid == _currentPart.cid;
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final TextStyle labelStyle = TextStyle(
+      fontSize: 12,
+      color: selected ? colors.onPrimaryContainer : colors.onSurface,
+    );
+    return ChoiceChip(
+      key: Key('part-${part.pageNumber}'),
+      selected: selected,
+      showCheckmark: false,
+      visualDensity: VisualDensity.compact,
+      // 分P chip 函数保存旧进度并打开用户选择的新分P。
+      onSelected: (_) => unawaited(_changePart(part)),
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            'P${part.pageNumber}',
+            style: labelStyle.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(width: 4),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 132),
+            child: Text(
+              part.title,
+              key: Key('part-title-${part.pageNumber}'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: labelStyle,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -192,7 +227,7 @@ extension _PlayerControlsView on _PlayerPageState {
               ),
               itemCount: parts.length,
               itemBuilder: (BuildContext context, int index) {
-                return _buildPartCard(parts[index], compact: false);
+                return _buildPartCard(parts[index]);
               },
             ),
           ),
@@ -202,13 +237,13 @@ extension _PlayerControlsView on _PlayerPageState {
   }
 
   /// 创建分P卡片，标题在同一按钮内最多显示两行并按需竖向滚动。
-  Widget _buildPartCard(VideoPart part, {required bool compact}) {
+  Widget _buildPartCard(VideoPart part) {
     final bool selected = part.cid == _currentPart.cid;
     final ColorScheme colors = Theme.of(context).colorScheme;
     return Material(
       color: selected
           ? colors.primaryContainer
-          : colors.surfaceContainerHighest,
+          : AppTheme.sunkenOf(context),
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         key: Key('part-${part.pageNumber}'),
@@ -216,10 +251,7 @@ extension _PlayerControlsView on _PlayerPageState {
         // 分P卡片函数保存旧进度并打开用户选择的新分P。
         onTap: () => unawaited(_changePart(part)),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 10 : 12,
-            vertical: compact ? 4 : 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -229,17 +261,17 @@ extension _PlayerControlsView on _PlayerPageState {
                 style: TextStyle(
                   color: selected ? colors.onPrimaryContainer : null,
                   fontWeight: FontWeight.w700,
-                  fontSize: compact ? 12 : 13,
+                  fontSize: 13,
                 ),
               ),
-              SizedBox(height: compact ? 1 : 3),
+              const SizedBox(height: 3),
               Expanded(
                 child: _PartTitleMarquee(
                   key: Key('part-title-${part.pageNumber}'),
                   text: part.title,
                   style: TextStyle(
                     color: selected ? colors.onPrimaryContainer : null,
-                    fontSize: compact ? 12 : 14,
+                    fontSize: 14,
                   ),
                 ),
               ),
