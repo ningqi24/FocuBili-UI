@@ -225,9 +225,9 @@ void main() {
     expect(find.text('首页继续学习测试'), findsOneWidget);
   });
 
-  /// 验证首页一次上滑会把首屏吸附到卡片区，而不是停在半屏位置。
-  testWidgets('首页首屏上滑后吸附到卡片区', (WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(420, 900));
+  /// 验证首页一次上滑后停在自然滚动位置，不再吸附到卡片区。
+  testWidgets('首页首屏上滑保持自然滚动位置', (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(420, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final LearningListService service = await _learningListService();
     final FocusTimerController focusController = FocusTimerController(
@@ -250,33 +250,43 @@ void main() {
     await tester.pumpAndSettle();
 
     final Finder scrollView = find.byType(CustomScrollView);
+    final ScrollController scroll = tester
+        .widget<CustomScrollView>(scrollView)
+        .controller!;
     await tester.drag(scrollView, const Offset(0, -260));
     await tester.pumpAndSettle();
 
+    final double upOffset = scroll.offset;
+    expect(upOffset, greaterThan(0));
+    final double heroHeight = tester
+        .getSize(find.byKey(const Key('focus-home-hero')))
+        .height;
     final Rect cardRect = tester.getRect(
       find.byKey(const Key('continue-learning-empty')),
     );
-    expect(cardRect.top, lessThan(110));
+    // 卡片顶边严格等于首屏自然让出的位置，没有任何吸附位移。
+    expect(cardRect.top, closeTo(heroHeight + 12 - upOffset, 2));
 
-    // 轻微下滑只保留自然位移，不应立即把所有卡片推回屏幕底部。
+    // 轻微下滑只保留自然位移，不应触发额外跳转。
     await tester.drag(scrollView, const Offset(0, 40));
     await tester.pumpAndSettle();
+    expect(scroll.offset, lessThan(upOffset));
     final Rect slightDownRect = tester.getRect(
       find.byKey(const Key('continue-learning-empty')),
     );
-    expect(slightDownRect.top, lessThan(180));
+    expect(slightDownRect.top, greaterThan(cardRect.top));
 
-    // 验证反向手势会播放回到首屏的完整吸附动画，而不是停在半屏位置。
+    // 反向手势同样按自然距离回退，不会播放回到首屏的吸附动画。
     await tester.drag(scrollView, const Offset(0, 180));
     await tester.pumpAndSettle();
     final Rect returnedCardRect = tester.getRect(
       find.byKey(const Key('continue-learning-empty')),
     );
-    expect(returnedCardRect.top, greaterThan(450));
+    expect(returnedCardRect.top, greaterThan(slightDownRect.top));
   });
 
-  /// 验证大幅上滑已经进入深层卡片时，不会被首次吸附拉回第一张卡片。
-  testWidgets('首页大幅上滑保留深层卡片位置', (WidgetTester tester) async {
+  /// 验证大幅上滑可以滚动到首页底部，且松手后不回弹。
+  testWidgets('首页大幅上滑滚动到底部且不回弹', (WidgetTester tester) async {
     // 短屏保留足够的深层滚动距离，同时让真实视口和 MediaQuery 尺寸一致。
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(420, 640);
@@ -303,18 +313,17 @@ void main() {
     await tester.pumpAndSettle();
 
     final Finder scrollView = find.byType(CustomScrollView);
-    // 越过欢迎区及 220 像素吸附窗口，模拟明确进入深层卡片的大幅手势。
+    final ScrollController scroll = tester
+        .widget<CustomScrollView>(scrollView)
+        .controller!;
     await tester.drag(scrollView, const Offset(0, -1300));
     await tester.pumpAndSettle();
 
-    final Rect firstCardRect = tester.getRect(
-      find.byKey(const Key('continue-learning-empty')),
-    );
-    final Rect summaryRect = tester.getRect(
-      find.byKey(const Key('focus-today-summary')),
-    );
-    expect(firstCardRect.top, lessThan(-8));
-    expect(summaryRect.top, lessThan(600));
+    final double maxOffset = scroll.position.maxScrollExtent;
+    expect(scroll.offset, closeTo(maxOffset, 2));
+    // 稳定后仍停在底部，取消吸附不会把页面拉回卡片区起点。
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(scroll.offset, closeTo(maxOffset, 2));
   });
 
   /// 验证浅色和深色首页动作按钮都使用应用主题主色，右上角只绘制图标。

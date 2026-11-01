@@ -10,7 +10,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart'
-    show RenderBox, RenderObject, ScrollDirection, SliverConstraints;
+    show RenderBox, RenderObject, SliverConstraints;
 
 import '../../core/layout/adaptive_layout.dart';
 import '../../core/router/app_router.dart';
@@ -26,7 +26,7 @@ import 'focus_timer_controller.dart';
 part 'focus_dashboard_home_layout.dart';
 part 'focus_dashboard_home_cards.dart';
 
-/// 首页专注台，提供目标、计时控制、今日汇总和最近本机记录。
+/// 专注台：传入个人入口时作为首页，否则是独立专注一级页面。
 class FocusDashboard extends StatefulWidget {
   /// 创建专注台，并接收打开视频、个人中心和统计页面的回调。
   const FocusDashboard({
@@ -39,9 +39,11 @@ class FocusDashboard extends StatefulWidget {
     this.onOpenLinkedVideo,
     this.continueLearningCard,
     this.onOpenLearningList,
+    this.onOpenFocus,
+    this.onOpenSubscriptions,
     this.layoutService,
     this.subscriptionService,
-    this.focusRequest = 0,
+    this.appBarTitle = 'Focubili-UIX',
   });
 
   final FocusTimerController controller;
@@ -59,12 +61,18 @@ class FocusDashboard extends StatefulWidget {
   /// 打开完整学习清单的回调，由外层首页决定页面和本机服务实例。
   final VoidCallback? onOpenLearningList;
 
+  /// 首页进入独立专注页的回调；为空时首页不绘制专注入口。
+  final VoidCallback? onOpenFocus;
+
+  /// 打开焦点订阅更新页的回调；为空时退回本页自己的路由跳转。
+  final VoidCallback? onOpenSubscriptions;
+
   /// 可注入的首页布局存储，业务服务和专注计时不受布局编辑影响。
   final DashboardLayoutService? layoutService;
   final SubscriptionService? subscriptionService;
 
-  /// 外层底栏中间按钮递增该值后，首页滚动到专注任务卡片。
-  final int focusRequest;
+  /// 独立专注页大标题；首页模式不使用该值。
+  final String appBarTitle;
 
   /// 创建保存目标输入和预设时长选择的页面状态。
   @override
@@ -74,9 +82,9 @@ class FocusDashboard extends StatefulWidget {
 /// 管理专注台表单输入、确认弹窗和计时操作反馈。
 class _FocusDashboardState extends State<FocusDashboard> {
   static const List<int> _presetMinutes = <int>[25, 45, 60];
-  static const double _homeSnapTriggerDistance = 48;
-  static const double _homeSnapOvershoot = 220;
-  static const double _homeReverseSnapDistance = 120;
+
+  /// 首页顶部下拉累计该距离后直接切换到独立专注页。
+  static const double _focusPullTriggerDistance = 120;
 
   /// 每日专注目标（分钟），首页「今日专注目标」仪表盘的进度基准。
   static const int _dailyGoalMinutes = 150;
@@ -125,10 +133,9 @@ class _FocusDashboardState extends State<FocusDashboard> {
   bool _editingHomeCards = false;
   int _selectedMinutes = 25;
   double _scrollOffset = 0;
-  bool _homeCardsSnapped = false;
-  bool _isSnappingHomeScroll = false;
-  ScrollDirection _homeScrollDirection = ScrollDirection.idle;
-  double? _homeScrollStartOffset;
+
+  /// 首页在顶部继续下拉时累计的距离，达到阈值后直接切换到专注页。
+  double _focusPullDistance = 0;
 
   Widget _buildSubscriptionButton() => ListenableBuilder(
     listenable: _subscriptions,
@@ -143,11 +150,14 @@ class _FocusDashboardState extends State<FocusDashboard> {
           isLabelVisible: service.unreadCount > 0,
           child: const Icon(Icons.rss_feed),
         ),
-        onPressed: () => Navigator.of(context).push<void>(
-          MaterialPageRoute(
-            builder: (_) => SubscriptionUpdatesPage(service: _subscriptions),
-          ),
-        ),
+        onPressed:
+            widget.onOpenSubscriptions ??
+            () => Navigator.of(context).push<void>(
+              MaterialPageRoute(
+                builder: (_) =>
+                    SubscriptionUpdatesPage(service: _subscriptions),
+              ),
+            ),
       );
     },
   );
@@ -160,19 +170,6 @@ class _FocusDashboardState extends State<FocusDashboard> {
     unawaited(_subscriptions.initialize());
     _goalController.addListener(_handleGoalChanged);
     _scrollController.addListener(_handleScrollChanged);
-  }
-
-  /// 底栏中间按钮切换回首页后，等首帧布局完成再滚动到专注任务卡片。
-  @override
-  void didUpdateWidget(covariant FocusDashboard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.focusRequest != widget.focusRequest) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _scrollToFocusSessionCard(context);
-        }
-      });
-    }
   }
 
   /// 目标输入变化时刷新开始按钮，不修改控制器中的活动计时。
@@ -190,110 +187,29 @@ class _FocusDashboardState extends State<FocusDashboard> {
     setState(() => _scrollOffset = _scrollController.offset);
   }
 
-  /// 在一次拖动结束后把首屏或卡片区吸附到完整的阅读位置。
-  /// 吸附不受首屏动画开关影响：首屏高于视口（大字体/矮屏）时仍保留两档吸附。
-  void _handleHomeScrollEnd(BuildContext context) {
-    if (widget.onOpenProfile == null ||
-        _editingHomeCards ||
-        _isSnappingHomeScroll ||
-        !_scrollController.hasClients) {
-      return;
-    }
-    final double heroHeight = _homeHeroHeight(context);
-    final double currentOffset = _scrollController.offset;
-    final double maxOffset = _scrollController.position.maxScrollExtent;
-    final double startOffset = _homeScrollStartOffset ?? currentOffset;
-    final double gestureDistance = (currentOffset - startOffset).abs();
-    if (currentOffset <= 24) {
-      _homeCardsSnapped = false;
-      return;
-    }
-    final double targetOffset;
-    final double firstCardOffset = (heroHeight + 12)
-        .clamp(0.0, maxOffset)
-        .toDouble();
-    if (!_homeCardsSnapped &&
-        currentOffset > _homeSnapTriggerDistance &&
-        currentOffset <= firstCardOffset + _homeSnapOvershoot) {
-      targetOffset = firstCardOffset;
-    } else if (!_homeCardsSnapped &&
-        currentOffset > firstCardOffset + _homeSnapOvershoot) {
-      // 用户已经越过首张卡片的吸附窗口，保留其自然滚动到的深层位置。
-      _homeCardsSnapped = true;
-      return;
-    } else if (_homeCardsSnapped &&
-        currentOffset > 24 &&
-        _homeScrollDirection == ScrollDirection.forward &&
-        gestureDistance >= _homeReverseSnapDistance) {
-      targetOffset = 0;
-    } else {
-      if (currentOffset >= heroHeight) {
-        _homeCardsSnapped = true;
-      }
-      return;
-    }
-    if ((targetOffset - currentOffset).abs() < 2) {
-      _homeCardsSnapped = targetOffset > 0;
-      return;
-    }
-    _isSnappingHomeScroll = true;
-    // 等当前 ScrollEndNotification 完成后再启动驱动动画，避免手势活动取消吸附。
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _editingHomeCards || !_scrollController.hasClients) {
-        _isSnappingHomeScroll = false;
-        return;
-      }
-      unawaited(_animateHomeSnap(targetOffset));
-    });
-  }
-
-  /// 记录首页主滚动的手势方向，并在手势结束后触发一次吸附。
-  bool _handleHomeScrollNotification(
-    BuildContext context,
-    ScrollNotification notification,
-  ) {
+  /// 记录首页主滚动的手势，在顶部继续下拉越过阈值时切换到独立专注页。
+  bool _handleHomeScrollNotification(ScrollNotification notification) {
     if (_editingHomeCards || notification.depth != 0) {
       return false;
     }
-    if (notification is UserScrollNotification) {
-      _homeScrollDirection = notification.direction;
-    } else if (notification is ScrollStartNotification &&
+    if (notification is OverscrollNotification &&
         notification.dragDetails != null &&
-        _scrollController.hasClients) {
-      _homeScrollStartOffset = _scrollController.offset;
-    } else if (notification is ScrollEndNotification) {
-      // 只吸附真实手势，跳转到输入框、底部编辑入口和拖动边缘滚动均保留目标位置。
-      if (_homeScrollStartOffset != null) {
-        _handleHomeScrollEnd(context);
+        notification.overscroll < 0) {
+      // 首页顶部继续下拉直接进入专注页，用完即重置，避免一次手势重复切换。
+      _focusPullDistance -= notification.overscroll;
+      if (_focusPullDistance >= _focusPullTriggerDistance &&
+          widget.onOpenFocus != null) {
+        _focusPullDistance = 0;
+        widget.onOpenFocus!();
       }
-      _homeScrollDirection = ScrollDirection.idle;
-      _homeScrollStartOffset = null;
+    } else if (notification is ScrollStartNotification ||
+        notification is ScrollEndNotification) {
+      _focusPullDistance = 0;
     }
     return false;
   }
 
-  /// 以短暂缓动完成首屏与卡片区之间的吸附，并在结束后恢复手势监听。
-  Future<void> _animateHomeSnap(double targetOffset) async {
-    try {
-      await _scrollController.animateTo(
-        targetOffset,
-        duration: const Duration(milliseconds: 420),
-        curve: Curves.easeOutCubic,
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSnappingHomeScroll = false;
-          _homeCardsSnapped = targetOffset > 0;
-        });
-      } else {
-        _isSnappingHomeScroll = false;
-        _homeCardsSnapped = targetOffset > 0;
-      }
-    }
-  }
-
-  /// 编辑时停止首页吸附，并清理旧手势，防止长按拖动被自动滚动抢走。
+  /// 编辑时清空下拉累计，防止长按拖动被误判成切换专注页。
   void _handleHomeEditingChanged(bool editing) {
     if (!mounted || editing == _editingHomeCards) return;
     if (editing && _scrollController.hasClients) {
@@ -301,9 +217,7 @@ class _FocusDashboardState extends State<FocusDashboard> {
     }
     setState(() {
       _editingHomeCards = editing;
-      _homeScrollDirection = ScrollDirection.idle;
-      _homeScrollStartOffset = null;
-      _isSnappingHomeScroll = false;
+      _focusPullDistance = 0;
     });
   }
 
@@ -881,24 +795,21 @@ class _FocusDashboardState extends State<FocusDashboard> {
         final bool useHomeHero = widget.onOpenProfile != null;
         if (useHomeHero &&
             AdaptiveLayout.usesWorkspace(MediaQuery.sizeOf(context))) {
-          return _buildWorkspaceDashboard(
-            context,
-            activeSession,
-            finishedSession,
-          );
+          return _buildWorkspaceDashboard(context);
         }
         return NotificationListener<ScrollNotification>(
-          onNotification: (ScrollNotification notification) =>
-              _handleHomeScrollNotification(context, notification),
+          onNotification: _handleHomeScrollNotification,
           child: CustomScrollView(
             controller: _scrollController,
+            // 内容不足一屏时也接受下拉手势，保证首页始终可以下拉进入专注页。
+            physics: const AlwaysScrollableScrollPhysics(),
             slivers: <Widget>[
               if (useHomeHero) _buildHomeHero(context),
               if (useHomeHero)
                 _buildCardsSliver(context, activeSession, finishedSession)
               else ...<Widget>[
                 SliverAppBar.large(
-                  title: const Text('Focubili-UIX'),
+                  title: Text(widget.appBarTitle),
                   actions: <Widget>[
                     _buildSubscriptionButton(),
                     if (widget.onOpenLearningList != null)

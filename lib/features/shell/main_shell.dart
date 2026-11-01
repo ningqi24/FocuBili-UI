@@ -1,18 +1,21 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/layout/adaptive_layout.dart';
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/app_behavior_preferences_service.dart';
+import '../focus/focus_page.dart';
 import '../home/home_page.dart';
 import '../learning/learning_list_page.dart';
 import '../profile/profile_page.dart';
 import '../search/search_page.dart';
 import '../subscriptions/subscription_updates_page.dart';
 
-/// 应用主框架，负责首页、搜索和“我的”三个一级页面的切换。
+/// 应用主框架，负责首页、关注、专注、清单和“我的”五个底栏一级页面切换。
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -34,8 +37,13 @@ class _MainShellState extends State<MainShell>
   /// 是否使用 iOS 26 液态玻璃底栏；关闭时保持经典 B站 五格底栏。
   bool _liquidGlassBottomBar = false;
 
-  /// 递增后让首页滚动到专注任务卡片，底栏中间按钮据此一步直达专注。
-  int _focusRequestGeneration = 0;
+  /// 页面栈顺序：首页、搜索、关注、专注、清单、我的；搜索从首页进入。
+  static const int _searchPageIndex = 1;
+  static const int _subscriptionsPageIndex = 2;
+  static const int _focusPageIndex = 3;
+  static const int _learningListPageIndex = 4;
+  static const int _profilePageIndex = 5;
+  static const int _pageCount = 6;
 
   /// 初始化一级页面过渡控制器，并在动画完成后提交目标页面索引。
   @override
@@ -70,7 +78,7 @@ class _MainShellState extends State<MainShell>
   /// 切换到指定一级页面；只让当前页和目标页参与直接滑入动画。
   void _selectPage(int index) {
     if (index < 0 ||
-        index > 2 ||
+        index >= _pageCount ||
         index == _currentIndex ||
         _transitionTo != null) {
       return;
@@ -117,7 +125,7 @@ class _MainShellState extends State<MainShell>
 
   /// 从首页的搜索入口直接切换到搜索页面。
   void _openSearch() {
-    _selectPage(1);
+    _selectPage(_searchPageIndex);
   }
 
   /// 从“我的”页返回首页，并触发首页重新读取学习清单和账号头像。
@@ -127,55 +135,55 @@ class _MainShellState extends State<MainShell>
 
   /// 从首页右上角的账号入口打开“我的”页。
   void _openProfile() {
-    _selectPage(2);
+    _selectPage(_profilePageIndex);
   }
 
-  /// 底栏“关注”直接打开焦点订阅更新页，返回后仍停留在当前一级页面。
-  Future<void> _openSubscriptions() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => const SubscriptionUpdatesPage(),
-      ),
-    );
+  /// 底栏“关注”切换到焦点订阅更新页，底栏保持常驻。
+  void _openSubscriptions() {
+    _selectPage(_subscriptionsPageIndex);
   }
 
-  /// 底栏“清单”直接打开完整学习清单，返回后仍停留在当前一级页面。
-  Future<void> _openLearningList() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => const LearningListPage(),
-      ),
-    );
+  /// 底栏“清单”切换到完整学习清单页，底栏保持常驻。
+  void _openLearningList() {
+    _selectPage(_learningListPageIndex);
   }
 
-  /// 底栏中间按钮把首页切回前台，并让专注任务卡片滚动到可见位置。
+  /// 底栏中间按钮和首页下拉手势都切换到独立专注页。
   void _openFocus() {
-    if (_currentIndex != 0) {
-      _selectPage(0);
-    }
-    setState(() => _focusRequestGeneration += 1);
+    _selectPage(_focusPageIndex);
   }
 
-  /// 玻璃底栏的五格索引；搜索页属于首页入口，保持首页高亮。
-  int get _bottomBarSelectedIndex => _currentIndex == 2 ? 4 : 0;
+  /// 打开本机专注统计看板；该页属于详情路由，退出后回到当前一级页面。
+  void _openFocusStatistics() {
+    Navigator.of(context).pushNamed(AppRoutes.focusStatistics);
+  }
 
-  /// 玻璃底栏点击分派；中间专注项复用首页直达专注卡片的逻辑。
+  /// 玻璃底栏的五格索引：搜索页属于首页入口，保持首页高亮。
+  int get _bottomBarSelectedIndex => switch (_currentIndex) {
+    0 || _searchPageIndex => 0,
+    _subscriptionsPageIndex => 1,
+    _focusPageIndex => 2,
+    _learningListPageIndex => 3,
+    _ => 4,
+  };
+
+  /// 底栏点击分派；每一格都只是切换一级页面，不再压入独立路由。
   void _handleBottomBarDestination(int index) {
     switch (index) {
       case 0:
         _openHome();
       case 1:
-        unawaited(_openSubscriptions());
+        _openSubscriptions();
       case 2:
         _openFocus();
       case 3:
-        unawaited(_openLearningList());
+        _openLearningList();
       case 4:
         _openProfile();
     }
   }
 
-  /// 处理 Android 系统返回：搜索页和“我的”页先回首页，首页再交给系统退出。
+  /// 处理 Android 系统返回：非首页一级页面先回首页，首页再交给系统退出。
   void _handleSystemBack(bool didPop, Object? result) {
     if (didPop || _transitionTo != null || _currentIndex == 0) {
       return;
@@ -183,26 +191,45 @@ class _MainShellState extends State<MainShell>
     _openHome();
   }
 
-  /// 创建需要挂载到主框架的三个一级页面，并保持它们的顺序稳定。
+  /// 创建挂载到主框架的六个页面，搜索页作为首页的内部入口保留输入状态。
   List<Widget> _buildPages({required bool workspace}) {
     return <Widget>[
       HomePage(
         onSearchRequested: _openSearch,
         onProfileRequested: _openProfile,
+        onFocusRequested: _openFocus,
+        onOpenSubscriptions: _openSubscriptions,
+        onOpenLearningList: _openLearningList,
         refreshGeneration: _homeRefreshGeneration,
-        focusRequest: _focusRequestGeneration,
       ),
       SearchPage(onBackRequested: workspace ? null : _openHome),
+      const SubscriptionUpdatesPage(),
+      FocusPage(
+        onOpenVideo: _openSearch,
+        onOpenStatistics: _openFocusStatistics,
+        onOpenSubscriptions: _openSubscriptions,
+        onOpenLearningList: _openLearningList,
+      ),
+      const LearningListPage(),
       ProfilePage(onBackRequested: workspace ? null : _openHome),
     ];
   }
+
+  /// 左侧导航的五格对应页面栈顺序，搜索仍由首页入口进入。
+  static const List<int> _railPageIndexes = <int>[
+    0,
+    _subscriptionsPageIndex,
+    _focusPageIndex,
+    _learningListPageIndex,
+    _profilePageIndex,
+  ];
 
   /// 创建横屏平板和桌面宽窗口使用的左侧一级导航。
   Widget _buildWorkspaceNavigation(Size windowSize) {
     final bool extended = AdaptiveLayout.usesExpandedWorkspace(windowSize);
     return NavigationRail(
       key: const Key('workspace-navigation-rail'),
-      selectedIndex: _currentIndex,
+      selectedIndex: math.max(0, _railPageIndexes.indexOf(_currentIndex)),
       extended: extended,
       minWidth: AdaptiveLayout.compactNavigationWidth,
       minExtendedWidth: AdaptiveLayout.expandedNavigationWidth,
@@ -227,9 +254,17 @@ class _MainShellState extends State<MainShell>
           label: Text('首页'),
         ),
         NavigationRailDestination(
-          icon: Icon(Icons.search_rounded),
-          selectedIcon: Icon(Icons.manage_search_rounded),
-          label: Text('搜索'),
+          icon: Icon(Icons.rss_feed),
+          label: Text('关注'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.timer_outlined),
+          selectedIcon: Icon(Icons.timer_rounded),
+          label: Text('专注'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.checklist_rounded),
+          label: Text('清单'),
         ),
         NavigationRailDestination(
           icon: Icon(Icons.person_outline_rounded),
@@ -237,7 +272,9 @@ class _MainShellState extends State<MainShell>
           label: Text('我的'),
         ),
       ],
-      onDestinationSelected: _selectPage,
+      // 左侧导航索引映射到页面栈索引，避免关注/专注等页面错位。
+      onDestinationSelected: (int index) =>
+          _selectPage(_railPageIndexes[index]),
     );
   }
 
@@ -260,7 +297,7 @@ class _MainShellState extends State<MainShell>
                   icon: Icons.home_outlined,
                   activeIcon: Icons.home_rounded,
                   label: '首页',
-                  selected: _currentIndex == 0,
+                  selected: _currentIndex <= _searchPageIndex,
                   onTap: _openHome,
                 ),
               ),
@@ -269,7 +306,7 @@ class _MainShellState extends State<MainShell>
                   icon: Icons.rss_feed,
                   activeIcon: Icons.rss_feed,
                   label: '关注',
-                  selected: false,
+                  selected: _currentIndex == _subscriptionsPageIndex,
                   onTap: _openSubscriptions,
                 ),
               ),
@@ -279,7 +316,7 @@ class _MainShellState extends State<MainShell>
                   icon: Icons.checklist_rounded,
                   activeIcon: Icons.checklist_rounded,
                   label: '清单',
-                  selected: false,
+                  selected: _currentIndex == _learningListPageIndex,
                   onTap: _openLearningList,
                 ),
               ),
@@ -288,7 +325,7 @@ class _MainShellState extends State<MainShell>
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
                   label: '我的',
-                  selected: _currentIndex == 2,
+                  selected: _currentIndex == _profilePageIndex,
                   onTap: _openProfile,
                 ),
               ),
@@ -334,12 +371,19 @@ class _MainShellState extends State<MainShell>
   /// 创建底栏中间凸起的专注按钮，向上偏移以越出底栏边界。
   Widget _buildFocusButton() {
     final ColorScheme colors = Theme.of(context).colorScheme;
+    final bool selected = _currentIndex == _focusPageIndex;
     return Transform.translate(
       offset: const Offset(0, -8),
       child: Material(
         color: colors.primary,
         clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          // 选中时用一圈内描边提示当前就在专注页，不新增颜色。
+          side: selected
+              ? BorderSide(color: colors.onPrimary, width: 2)
+              : BorderSide.none,
+        ),
         child: InkWell(
           key: const Key('bottom-bar-focus'),
           borderRadius: BorderRadius.circular(16),

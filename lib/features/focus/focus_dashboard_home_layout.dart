@@ -17,11 +17,10 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
     return '$slot，继续学习';
   }
 
-  /// 日期与今日已专注分钟，作为仪表盘的轻量上下文。
+  /// 日期提示与下拉手势说明，首页不再重复展示专注统计。
   String _homeTodayMeta() {
     final DateTime now = DateTime.now();
-    final int minutes = widget.controller.todayFocusedDuration().inMinutes;
-    return '${now.month} 月 ${now.day} 日 · 今日已专注 $minutes 分钟';
+    return '${now.month} 月 ${now.day} 日 · 下拉进入专注';
   }
 
   /// 根据文字实际换行高度为首屏留足空间，矮屏和大字体允许自然滚动。
@@ -62,51 +61,18 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
       theme.textTheme.bodyMedium,
       width,
     );
-    final int todayMinutes = widget.controller.todayFocusedDuration().inMinutes;
-    final int percent =
-        ((todayMinutes / _FocusDashboardState._dailyGoalMinutes).clamp(0, 1) *
-                100)
-            .round();
-    // 仪表盘卡高度：卡片外边距 + 上内边距 + 元信息行 + 间距 + 进度行 + 间距 + 按钮行 + 下内边距。
-    final double goalCardHeight =
-        8 +
-        10 +
-        math.max(
-          _measureHeroText(
+    // 首屏动作行：进入专注与开始搜索并排，按最窄可用宽度测量标签换行高度。
+    final double actionLabelWidth = math.max(40.0, (width - 10) / 2 - 72);
+    final double actionHeight = math.max(
+      kMinInteractiveDimension,
+      _measureHeroText(
             context,
-            '今日专注目标',
-            theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-            width * 0.42,
-          ),
-          _measureHeroText(
-            context,
-            '$todayMinutes / ${_FocusDashboardState._dailyGoalMinutes} 分钟',
+            '进入专注',
             theme.textTheme.labelLarge,
-            width * 0.42,
-          ),
-        ) +
-        10 +
-        math.max(
-          8.0,
-          _measureHeroText(
-            context,
-            '$percent%',
-            theme.textTheme.labelLarge,
-            width * 0.2,
-          ),
-        ) +
-        12 +
-        math.max(
-          kMinInteractiveDimension,
-          _measureHeroText(
-                context,
-                '开始专注',
-                theme.textTheme.labelLarge,
-                width * 0.42,
-              ) +
-              24,
-        ) +
-        10;
+            actionLabelWidth,
+          ) +
+          28,
+    );
     // 订阅引导用组件实测高度；首帧尚未布局时退回保守估值，避免出现空白或溢出。
     final double introHeight;
     if (_showSubscriptionIntroduction) {
@@ -126,8 +92,8 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
         titleHeight +
         greetingHeight +
         metaHeight +
-        goalCardHeight +
-        56 +
+        actionHeight +
+        64 +
         introHeight;
     return preferred > minimum ? preferred : minimum;
   }
@@ -252,10 +218,9 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          _buildTodayGoalCard(context),
                           const Spacer(),
-                          // 保留旧入口文字节点，实际入口由仪表盘按钮承担。
+                          _buildHomePrimaryActions(context),
+                          // 保留旧入口文字节点，实际入口由下方动作行承担。
                           const SizedBox.shrink(child: Text('打开视频')),
                         ],
                       ),
@@ -270,7 +235,40 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
     );
   }
 
-  /// 创建「今日专注目标」仪表盘：今日专注分钟、目标进度与两个核心动作。
+  /// 创建首页动作行：进入独立专注页与开始搜索，保持唯一强调色。
+  Widget _buildHomePrimaryActions(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final bool running = widget.controller.activeSession != null;
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: FilledButton.tonalIcon(
+            key: const Key('home-start-focus'),
+            // 首页不再内嵌专注计时，按钮和下拉手势都直接切换到专注一级页。
+            onPressed: widget.onOpenFocus,
+            icon: Icon(running ? Icons.adjust_rounded : Icons.timer_outlined),
+            label: Text(running ? '查看专注' : '进入专注'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: FilledButton.icon(
+            key: const Key('home-start-search'),
+            // 开始搜索按钮函数进入搜索页面，保持主题主色的唯一强调。
+            onPressed: widget.onOpenVideo,
+            icon: const Icon(Icons.search_rounded),
+            label: const Text('开始搜索'),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 创建「今日专注目标」仪表盘：今日专注分钟、目标进度与进入计时动作。
   Widget _buildTodayGoalCard(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final int todayMinutes = widget.controller.todayFocusedDuration().inMinutes;
@@ -281,7 +279,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
     final int percent = (goalProgress * 100).round();
     final bool running = widget.controller.activeSession != null;
     return Card(
-      key: const Key('home-today-goal'),
+      key: const Key('focus-daily-goal'),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
         child: Column(
@@ -338,34 +336,12 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: FilledButton.tonalIcon(
-                    key: const Key('home-start-focus'),
-                    // 开始专注一步直达专注任务卡，填写目标即可开始计时。
-                    onPressed: () => _scrollToFocusSessionCard(context),
-                    icon: Icon(
-                      running ? Icons.adjust_rounded : Icons.timer_outlined,
-                    ),
-                    label: Text(running ? '查看专注' : '开始专注'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton.icon(
-                    key: const Key('home-start-search'),
-                    // 开始搜索按钮函数进入搜索页面，保持主题主色的唯一强调。
-                    onPressed: widget.onOpenVideo,
-                    icon: const Icon(Icons.search_rounded),
-                    label: const Text('开始搜索'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                    ),
-                  ),
-                ),
-              ],
+            FilledButton.tonalIcon(
+              key: const Key('focus-goal-start'),
+              // 目标卡在专注页顶部，按钮把计时卡滚动到可见位置。
+              onPressed: () => _scrollToFocusSessionCard(context),
+              icon: Icon(running ? Icons.adjust_rounded : Icons.timer_outlined),
+              label: Text(running ? '查看专注计时' : '开始专注'),
             ),
           ],
         ),
@@ -517,13 +493,31 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
               ),
             ),
             const SizedBox(height: 28),
-            FilledButton.icon(
-              key: const Key('home-start-search'),
-              // 工作台搜索按钮函数切换到左侧导航中的搜索页面。
-              onPressed: widget.onOpenVideo,
-              icon: const Icon(Icons.search_rounded),
-              label: const Text('开始搜索'),
-              style: FilledButton.styleFrom(minimumSize: const Size(176, 52)),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                FilledButton.tonalIcon(
+                  key: const Key('home-start-focus'),
+                  // 工作台同样通过一级页面切换进入专注，不嵌入计时卡片。
+                  onPressed: widget.onOpenFocus,
+                  icon: const Icon(Icons.timer_outlined),
+                  label: const Text('进入专注'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(160, 52),
+                  ),
+                ),
+                FilledButton.icon(
+                  key: const Key('home-start-search'),
+                  // 工作台搜索按钮函数切换到左侧导航中的搜索页面。
+                  onPressed: widget.onOpenVideo,
+                  icon: const Icon(Icons.search_rounded),
+                  label: const Text('开始搜索'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(176, 52),
+                  ),
+                ),
+              ],
             ),
             // 保留旧入口文字节点，但工作台只绘制一个清晰的主要动作。
             const SizedBox.shrink(child: Text('打开视频')),
@@ -534,11 +528,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
   }
 
   /// 横屏左侧保留简介，所有可编辑卡片统一放在独立可滚动的右侧区域。
-  Widget _buildWorkspaceDashboard(
-    BuildContext context,
-    FocusSession? activeSession,
-    FocusSession? finishedSession,
-  ) {
+  Widget _buildWorkspaceDashboard(BuildContext context) {
     return Padding(
       key: const Key('focus-workspace-layout'),
       padding: const EdgeInsets.all(20),
@@ -564,12 +554,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
                 child: SingleChildScrollView(
                   key: const Key('focus-workspace-secondary'),
                   controller: _scrollController,
-                  child: _buildHomeCardBoard(
-                    context,
-                    activeSession,
-                    finishedSession,
-                    columns: columns,
-                  ),
+                  child: _buildHomeCardBoard(context, columns: columns),
                 ),
               ),
             ],
@@ -603,12 +588,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
           ),
           sliver: widget.onOpenProfile != null
               ? SliverToBoxAdapter(
-                  child: _buildHomeCardBoard(
-                    context,
-                    activeSession,
-                    finishedSession,
-                    columns: 1,
-                  ),
+                  child: _buildHomeCardBoard(context, columns: 1),
                 )
               : SliverList.list(
                   children: <Widget>[
@@ -620,6 +600,9 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
                         ),
                       )
                     else ...<Widget>[
+                      // 专注一级页先展示今日目标进度，再进入实际计时。
+                      _buildTodayGoalCard(context),
+                      const SizedBox(height: 14),
                       if (widget.continueLearningCard != null) ...<Widget>[
                         widget.continueLearningCard!,
                         const SizedBox(height: 14),
@@ -628,10 +611,13 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
                         _buildFinishedCard(context, finishedSession),
                         const SizedBox(height: 14),
                       ],
-                      if (activeSession != null)
-                        _buildActiveCard(context, activeSession)
-                      else
-                        _buildReadyCard(context),
+                      // 同一编号在准备和计时状态之间切换，不因状态变化重置位置。
+                      KeyedSubtree(
+                        key: _focusSessionCardKey,
+                        child: activeSession != null
+                            ? _buildActiveCard(context, activeSession)
+                            : _buildReadyCard(context),
+                      ),
                       const SizedBox(height: 14),
                       _buildTodaySummary(context),
                       const SizedBox(height: 14),

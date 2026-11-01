@@ -52,30 +52,25 @@ void main() {
         .controller!;
   }
 
-  double firstCardOffset(WidgetTester tester, ScrollController scroll) =>
-      (tester.getSize(find.byKey(const Key('focus-home-hero'))).height + 12)
-          .clamp(0.0, scroll.position.maxScrollExtent);
-
-  /// 1.8 只有首屏/卡片区两档；缓慢拉动超过阈值后应直接吸附到卡片区。
-  Future<void> pullAndExpectOpen(
+  /// 首页取消吸附后拖动停在自然位置，松手不再自动跳到卡片区。
+  Future<void> dragAndExpectNaturalScroll(
     WidgetTester tester,
     ScrollController scroll,
   ) async {
     scroll.jumpTo(0);
     await tester.pumpAndSettle();
-    final openOffset = firstCardOffset(tester, scroll);
     final gesture = await tester.startGesture(const Offset(8, 400));
-    await gesture.moveBy(const Offset(0, -120));
+    await gesture.moveBy(const Offset(0, -160));
     await tester.pump(const Duration(milliseconds: 500));
-    expect(scroll.offset, greaterThan(48));
-    expect(scroll.offset, lessThan(openOffset));
+    final double draggedOffset = scroll.offset;
+    expect(draggedOffset, greaterThan(0));
     await gesture.up();
     await tester.pumpAndSettle();
-    expect(scroll.offset, closeTo(openOffset, 2));
+    expect(scroll.offset, closeTo(draggedOffset, 2));
   }
 
   for (final editing in [false, true]) {
-    testWidgets('1.8 接受首次订阅提示后恢复两档吸附，原编辑状态 $editing', (tester) async {
+    testWidgets('1.8 接受首次订阅提示后恢复自然滚动，原编辑状态 $editing', (tester) async {
       final scroll = await mountHome(tester);
       final originalKey = tester
           .widget<EditableCardBoard>(find.byType(EditableCardBoard))
@@ -104,12 +99,12 @@ void main() {
       );
       expect(find.text('自定义').last, findsOneWidget);
       expect(find.byKey(const Key('new-focus-subscription')), findsNothing);
-      await pullAndExpectOpen(tester, scroll);
+      await dragAndExpectNaturalScroll(tester, scroll);
       expect(tester.takeException(), isNull);
     });
   }
 
-  testWidgets('1.8 窄屏大字拒绝提示恢复高度，继续使用原两档吸附', (tester) async {
+  testWidgets('1.8 窄屏大字拒绝提示恢复高度，首页保持自然滚动', (tester) async {
     final scroll = await mountHome(
       tester,
       size: const Size(360, 720),
@@ -125,7 +120,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.getSize(hero).height, lessThan(visibleHeight));
     expect(find.byKey(const Key('new-focus-subscription')), findsNothing);
-    await pullAndExpectOpen(tester, scroll);
+    await dragAndExpectNaturalScroll(tester, scroll);
     expect(tester.takeException(), isNull);
   });
 }

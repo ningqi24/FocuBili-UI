@@ -148,8 +148,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  /// 矮横屏平板首页把学习入口和专注状态同时放在左右两栏。
-  testWidgets('矮横屏首页使用学习和专注双栏', (WidgetTester tester) async {
+  /// 矮横屏首页左栏保留简介和一级页入口，右栏是首页可编辑卡片。
+  testWidgets('矮横屏首页使用简介与卡片双栏', (WidgetTester tester) async {
     _configureTestWindow(tester, const Size(1024, 600));
     final FocusTimerController controller = FocusTimerController(
       tickInterval: const Duration(days: 1),
@@ -166,6 +166,8 @@ void main() {
           onOpenStatistics: () {},
           // 提供个人入口以启用真实首页欢迎区。
           onOpenProfile: () {},
+          // 专注入口由主框架切换一级页面；这里只验证入口存在。
+          onOpenFocus: () {},
         ),
       ),
     );
@@ -175,7 +177,18 @@ void main() {
     expect(find.byKey(const Key('focus-workspace-primary')), findsOneWidget);
     expect(find.byKey(const Key('focus-workspace-secondary')), findsOneWidget);
     expect(find.byKey(const Key('focus-home-hero')), findsNothing);
-    expect(find.byKey(const Key('focus-ready-card')), findsOneWidget);
+    // 首页不再内嵌专注计时卡片，专注入口只负责切换到一级页面。
+    expect(find.byKey(const Key('focus-ready-card')), findsNothing);
+    expect(find.byKey(const Key('home-start-focus')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('focus-workspace-secondary')),
+        matching: find.byKey(
+          const ValueKey('dashboard-card-home.quick_actions'),
+        ),
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 

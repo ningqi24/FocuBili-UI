@@ -88,16 +88,16 @@ void main() {
         tester.getBottomLeft(find.byKey(const Key('home-utility-actions'))).dy,
       ),
     );
-    expect(_board(tester).items, hasLength(7));
+    expect(_board(tester).items, hasLength(3));
     expect(_board(tester).items.every((card) => !card.required), isTrue);
     await _tapVisible(tester, custom);
     await _tapVisible(
       tester,
-      find.byKey(const ValueKey('dashboard-menu-home.today_summary')),
+      find.byKey(const ValueKey('dashboard-menu-home.quick_actions')),
     );
     await _tapVisible(
       tester,
-      find.byKey(const ValueKey('dashboard-before-home.today_summary')),
+      find.byKey(const ValueKey('dashboard-before-home.quick_actions')),
     );
     await _tapVisible(
       tester,
@@ -106,8 +106,8 @@ void main() {
     final hidden = await service.load('home', []);
     expect(hidden.hidden, contains('home.continue_learning'));
     expect(
-      hidden.order.indexOf('home.today_summary'),
-      lessThan(hidden.order.indexOf('home.focus_session')),
+      hidden.order.indexOf('home.quick_actions'),
+      lessThan(hidden.order.indexOf('home.continue_learning')),
     );
     expect(find.byKey(const Key('test-continue-learning')), findsNothing);
 
@@ -134,12 +134,12 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  /// 隐藏活动任务不会停表，结果提示出现、关闭和新任务开始均保留同一登记布局。
-  testWidgets('首页条件专注更新保留隐藏顺序且不停止计时', (tester) async {
+  /// 首页不再内嵌专注卡片，进行中的计时只在独立专注页展示且不中断。
+  testWidgets('首页专注卡片已移除且计时仍由专注页继续', (tester) async {
     _setWindow(tester, const Size(430, 900));
     DateTime now = DateTime(2026, 10, 2, 9);
     final controller = FocusTimerController(
-      // 测试时钟只通过本项显式推进，确认隐藏期间仍累计时长。
+      // 测试时钟只通过本项显式推进，确认切页期间仍累计时长。
       clock: () => now,
       tickInterval: const Duration(days: 1),
     );
@@ -154,39 +154,44 @@ void main() {
     final service = DashboardLayoutService();
     await tester.pumpWidget(_homeHost(controller, service));
     await tester.pumpAndSettle();
-    await _tapVisible(tester, find.text('自定义').last);
-    await _tapVisible(
-      tester,
-      find.byKey(const ValueKey('dashboard-hide-home.focus_session')),
-    );
-    final saved = await service.load('home', []);
+
+    // 首页登记表只剩继续学习、快捷入口和焦点订阅三张非专注卡片。
+    expect(_board(tester).items, hasLength(3));
+    expect(find.byKey(const Key('active-focus-card')), findsNothing);
+    expect(find.byKey(const Key('focus-today-summary')), findsNothing);
     now = now.add(const Duration(minutes: 1));
     expect(controller.activeSession?.status, FocusSessionStatus.running);
     expect(controller.elapsedDuration, const Duration(minutes: 1));
 
     await controller.endFocusEarly();
     await tester.pumpAndSettle();
+    // 首页不再出现完成提示，切到独立专注页后才展示结果与状态。
+    expect(find.byKey(const Key('focus-finished-card')), findsNothing);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FocusDashboard(
+            controller: controller,
+            onOpenVideo: () {},
+            onOpenStatistics: () {},
+            layoutService: service,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('focus-finished-card')), findsOneWidget);
-    expect(find.byKey(const Key('focus-ready-card')), findsNothing);
+    expect(find.byKey(const Key('focus-ready-card')), findsOneWidget);
+
     controller.dismissLastFinishedSession();
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('focus-finished-card')), findsNothing);
-    expect(
-      _board(
-        tester,
-      ).items.singleWhere((card) => card.id == 'home.focus_finished').available,
-      isFalse,
-    );
     await controller.startFocus(
       goal: '第二次专注',
       duration: const Duration(minutes: 25),
     );
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('active-focus-card')), findsNothing);
-    final restored = await service.load('home', []);
-    expect(restored.order, saved.order);
-    expect(restored.hidden, saved.hidden);
-    expect(_board(tester).items, hasLength(7));
+    expect(find.byKey(const Key('active-focus-card')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -217,11 +222,11 @@ void main() {
     final continueRect = tester.getRect(
       find.byKey(const ValueKey('dashboard-card-home.continue_learning')),
     );
-    final focusRect = tester.getRect(
-      find.byKey(const ValueKey('dashboard-card-home.focus_session')),
+    final actionsRect = tester.getRect(
+      find.byKey(const ValueKey('dashboard-card-home.quick_actions')),
     );
-    expect(continueRect.top, focusRect.top);
-    expect(continueRect.right, lessThan(focusRect.left));
+    expect(continueRect.top, actionsRect.top);
+    expect(continueRect.right, lessThan(actionsRect.left));
     await _tapVisible(tester, find.text('完成'));
     await _tapVisible(tester, find.text('自定义').last);
     tester.view.physicalSize = const Size(430, 900);
@@ -242,11 +247,8 @@ void main() {
     final service = DashboardLayoutService();
     const ids = <String>[
       'home.continue_learning',
-      'home.focus_finished',
-      'home.focus_session',
-      'home.today_summary',
-      'home.recent_history',
       'home.quick_actions',
+      'home.focus_subscriptions',
     ];
     await service.save('home', DashboardLayout(order: ids, hidden: ids));
     await tester.pumpWidget(
@@ -256,7 +258,7 @@ void main() {
     expect(tester.takeException(), isNull, reason: '大字体首页首帧不溢出');
     expect(
       tester.getSize(find.byKey(const Key('focus-home-hero'))).height,
-      greaterThan(366),
+      greaterThanOrEqualTo(280),
     );
     await tester.ensureVisible(find.byKey(const Key('home-start-search')));
     await tester.pumpAndSettle();
@@ -291,10 +293,6 @@ void main() {
       final layouts = DashboardLayoutService();
       const ids = [
         'home.continue_learning',
-        'home.focus_finished',
-        'home.focus_session',
-        'home.today_summary',
-        'home.recent_history',
         'home.quick_actions',
         'home.focus_subscriptions',
       ];

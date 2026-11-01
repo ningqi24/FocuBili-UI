@@ -24,23 +24,32 @@ class HomePage extends StatefulWidget {
     super.key,
     required this.onSearchRequested,
     this.onProfileRequested,
+    this.onFocusRequested,
+    this.onOpenSubscriptions,
+    this.onOpenLearningList,
     this.learningListService,
     this.videoService,
     this.authService,
     this.layoutService,
     this.refreshGeneration = 0,
-    this.focusRequest = 0,
   });
 
   final VoidCallback onSearchRequested;
   final VoidCallback? onProfileRequested;
+
+  /// 切入独立专注一级页的回调；由主框架提供，保证底栏常驻。
+  final VoidCallback? onFocusRequested;
+
+  /// 切入“关注”一级页的回调；为空时焦点订阅入口退回自己的路由跳转。
+  final VoidCallback? onOpenSubscriptions;
+
+  /// 切入“清单”一级页的回调；为空时继续使用独立路由页面。
+  final VoidCallback? onOpenLearningList;
+
   final LearningListService? learningListService;
   final BilibiliService? videoService;
   final BilibiliAuthService? authService;
   final int refreshGeneration;
-
-  /// 主框架底栏中间按钮递增该值后，首页把专注任务卡片滚动到可见位置。
-  final int focusRequest;
 
   /// 首页卡片布局存储，与学习清单和计时业务分开维护。
   final DashboardLayoutService? layoutService;
@@ -145,8 +154,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     FocusVideoLauncher.open(context, session);
   }
 
-  /// 打开完整学习清单，返回首页后重新读取播放器或管理页可能更新的任务。
+  /// 打开完整学习清单；主框架会直接切换到“清单”一级页面。
   Future<void> _openLearningList() async {
+    final VoidCallback? onOpenLearningList = widget.onOpenLearningList;
+    if (onOpenLearningList != null) {
+      onOpenLearningList();
+      return;
+    }
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         // 清单页面构建函数复用首页同一服务，保证测试和返回刷新使用同一数据源。
@@ -409,7 +423,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             _openLinkedVideo(context, session),
         continueLearningCard: _buildContinueLearningCard(context),
         onOpenLearningList: () => unawaited(_openLearningList()),
-        focusRequest: widget.focusRequest,
+        onOpenFocus: widget.onFocusRequested,
+        onOpenSubscriptions: widget.onOpenSubscriptions,
       ),
     );
   }

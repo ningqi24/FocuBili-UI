@@ -18,10 +18,14 @@ class SubscriptionHomeCard extends StatefulWidget {
     this.service,
     this.videoService,
     this.playerBuilder,
+    this.onOpenFeed,
   });
   final SubscriptionService? service;
   final BilibiliService? videoService;
   final Widget Function(VideoPreview video)? playerBuilder;
+
+  /// 外层主框架切到“关注”一级页的回调；为空时退回本页自己的路由跳转。
+  final VoidCallback? onOpenFeed;
 
   @override
   State<SubscriptionHomeCard> createState() => _SubscriptionHomeCardState();
@@ -38,12 +42,16 @@ class _SubscriptionHomeCardState extends State<SubscriptionHomeCard> {
     unawaited(_service.initialize());
   }
 
-  void _openFeed() => Navigator.of(context).push<void>(
-    MaterialPageRoute(
-      builder: (_) =>
-          SubscriptionUpdatesPage(service: _service, videoService: _videos),
-    ),
-  );
+  void _openFeed() => widget.onOpenFeed != null
+      ? widget.onOpenFeed!()
+      : Navigator.of(context).push<void>(
+          MaterialPageRoute(
+            builder: (_) => SubscriptionUpdatesPage(
+              service: _service,
+              videoService: _videos,
+            ),
+          ),
+        );
 
   Future<void> _open(SubscriptionFeedItem item) async {
     if (_opening) return;

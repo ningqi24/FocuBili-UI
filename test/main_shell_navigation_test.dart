@@ -127,7 +127,7 @@ void main() {
     expect(restoredSearchInput.controller?.text, '原有搜索');
   });
 
-  /// 验证开启液态玻璃后底栏换成玻璃胶囊，五格跳转仍然可用。
+  /// 验证开启液态玻璃后底栏换成玻璃胶囊，五格都在页面内切换且底栏常驻。
   testWidgets('液态玻璃底栏保留五格跳转', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       AppBehaviorPreferencesService.liquidGlassBottomBarKey: true,
@@ -138,24 +138,68 @@ void main() {
     expect(bar, findsOneWidget);
     expect(find.byKey(const Key('bottom-bar-focus')), findsNothing);
 
-    await tester.tap(find.descendant(of: bar, matching: find.text('清单')));
+    await tester.tap(find.descendant(of: bar, matching: find.text('关注')).first);
     await tester.pumpAndSettle();
+    // 关注是一级页面：底栏仍在，页面内容直接切换。
+    expect(bar, findsOneWidget);
+    expect(find.text('焦点订阅'), findsWidgets);
+
+    await tester.tap(find.descendant(of: bar, matching: find.text('专注')).first);
+    await tester.pumpAndSettle();
+    // 专注是独立一级页面，首页的专注卡片不再出现。
+    expect(bar, findsOneWidget);
+    expect(find.byKey(const Key('focus-primary-page')), findsOneWidget);
+    expect(find.byKey(const Key('focus-daily-goal')), findsOneWidget);
+    expect(find.byKey(const Key('focus-ready-card')), findsOneWidget);
+    expect(find.byKey(const Key('focus-home-hero')), findsNothing);
+
+    await tester.tap(find.descendant(of: bar, matching: find.text('清单')).first);
+    await tester.pumpAndSettle();
+    expect(bar, findsOneWidget);
     expect(find.byKey(const Key('search-learning-list')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  /// 验证横屏平板通过左侧导航直接切换三个一级页面，子页不再显示返回首页按钮。
+  /// 验证首页不再展示专注计时卡片，下拉手势直接进入专注页。
+  testWidgets('首页去除专注卡片并下拉进入专注页', (WidgetTester tester) async {
+    await _pumpMainShell(tester);
+
+    expect(find.byKey(const Key('focus-home-hero')), findsOneWidget);
+    expect(find.byKey(const Key('focus-ready-card')), findsNothing);
+    expect(find.byKey(const Key('focus-today-summary')), findsNothing);
+    expect(find.byKey(const Key('focus-recent-history')), findsNothing);
+
+    final Finder scrollView = find.byType(CustomScrollView).first;
+    // 首页已经在顶部，继续向下拖动累计到阈值后切换到专注一级页面。
+    await tester.drag(scrollView, const Offset(0, 220));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('focus-primary-page')), findsOneWidget);
+    expect(find.byKey(const Key('bottom-bar-focus')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  /// 验证横屏平板通过左侧导航直接切换五个一级页面，子页不再显示返回首页按钮。
   testWidgets('平板横屏使用左侧一级导航', (WidgetTester tester) async {
     await _pumpLandscapeMainShell(tester);
 
     final Finder rail = find.byKey(const Key('workspace-navigation-rail'));
     expect(rail, findsOneWidget);
     expect(find.byKey(const Key('focus-workspace-layout')), findsOneWidget);
+    expect(find.byKey(const Key('home-start-focus')), findsOneWidget);
+    expect(find.byKey(const Key('focus-ready-card')), findsNothing);
 
-    await tester.tap(find.descendant(of: rail, matching: find.text('搜索')));
+    await tester.tap(find.descendant(of: rail, matching: find.text('关注')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('search-workspace-layout')), findsOneWidget);
-    expect(find.byKey(const Key('search-back-button')), findsNothing);
+    expect(find.text('焦点订阅'), findsWidgets);
+
+    await tester.tap(find.descendant(of: rail, matching: find.text('专注')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('focus-primary-page')), findsOneWidget);
+    expect(find.byKey(const Key('focus-ready-card')), findsOneWidget);
+
+    await tester.tap(find.descendant(of: rail, matching: find.text('清单')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('search-learning-list')), findsOneWidget);
 
     await tester.tap(find.descendant(of: rail, matching: find.text('我的')));
     await tester.pumpAndSettle();
