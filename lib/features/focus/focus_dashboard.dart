@@ -41,6 +41,7 @@ class FocusDashboard extends StatefulWidget {
     this.onOpenLearningList,
     this.layoutService,
     this.subscriptionService,
+    this.focusRequest = 0,
   });
 
   final FocusTimerController controller;
@@ -61,6 +62,9 @@ class FocusDashboard extends StatefulWidget {
   /// 可注入的首页布局存储，业务服务和专注计时不受布局编辑影响。
   final DashboardLayoutService? layoutService;
   final SubscriptionService? subscriptionService;
+
+  /// 外层底栏中间按钮递增该值后，首页滚动到专注任务卡片。
+  final int focusRequest;
 
   /// 创建保存目标输入和预设时长选择的页面状态。
   @override
@@ -156,6 +160,19 @@ class _FocusDashboardState extends State<FocusDashboard> {
     unawaited(_subscriptions.initialize());
     _goalController.addListener(_handleGoalChanged);
     _scrollController.addListener(_handleScrollChanged);
+  }
+
+  /// 底栏中间按钮切换回首页后，等首帧布局完成再滚动到专注任务卡片。
+  @override
+  void didUpdateWidget(covariant FocusDashboard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusRequest != widget.focusRequest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _scrollToFocusSessionCard(context);
+        }
+      });
+    }
   }
 
   /// 目标输入变化时刷新开始按钮，不修改控制器中的活动计时。

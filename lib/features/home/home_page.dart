@@ -29,6 +29,7 @@ class HomePage extends StatefulWidget {
     this.authService,
     this.layoutService,
     this.refreshGeneration = 0,
+    this.focusRequest = 0,
   });
 
   final VoidCallback onSearchRequested;
@@ -37,6 +38,9 @@ class HomePage extends StatefulWidget {
   final BilibiliService? videoService;
   final BilibiliAuthService? authService;
   final int refreshGeneration;
+
+  /// 主框架底栏中间按钮递增该值后，首页把专注任务卡片滚动到可见位置。
+  final int focusRequest;
 
   /// 首页卡片布局存储，与学习清单和计时业务分开维护。
   final DashboardLayoutService? layoutService;
@@ -405,6 +409,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             _openLinkedVideo(context, session),
         continueLearningCard: _buildContinueLearningCard(context),
         onOpenLearningList: () => unawaited(_openLearningList()),
+        focusRequest: widget.focusRequest,
       ),
     );
   }

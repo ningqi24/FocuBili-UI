@@ -202,8 +202,6 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
                         children: <Widget>[
                           Row(
                             children: <Widget>[
-                              // 保留首页文字节点，便于旧版无障碍和启动回归测试识别当前页面。
-                              const SizedBox.shrink(child: Text('首页')),
                               Expanded(
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.opaque,
@@ -236,8 +234,6 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
                                 ),
                                 icon: _buildProfileIcon(actionTextColor),
                               ),
-                              // 保留旧启动测试需要的文字节点，实际按钮仍只绘制图标。
-                              const SizedBox.shrink(child: Text('我的')),
                             ],
                           ),
                           _buildSubscriptionIntroduction(),

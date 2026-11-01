@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/layout/adaptive_layout.dart';
+import '../../core/theme/app_theme.dart';
 import '../home/home_page.dart';
+import '../learning/learning_list_page.dart';
 import '../profile/profile_page.dart';
 import '../search/search_page.dart';
+import '../subscriptions/subscription_updates_page.dart';
 
 /// 应用主框架，负责首页、搜索和“我的”三个一级页面的切换。
 class MainShell extends StatefulWidget {
@@ -24,6 +27,9 @@ class _MainShellState extends State<MainShell>
   int? _transitionFrom;
   int? _transitionTo;
   int _homeRefreshGeneration = 0;
+
+  /// 递增后让首页滚动到专注任务卡片，底栏中间按钮据此一步直达专注。
+  int _focusRequestGeneration = 0;
 
   /// 初始化一级页面过渡控制器，并在动画完成后提交目标页面索引。
   @override
@@ -98,6 +104,32 @@ class _MainShellState extends State<MainShell>
     _selectPage(2);
   }
 
+  /// 底栏“关注”直接打开焦点订阅更新页，返回后仍停留在当前一级页面。
+  Future<void> _openSubscriptions() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => const SubscriptionUpdatesPage(),
+      ),
+    );
+  }
+
+  /// 底栏“清单”直接打开完整学习清单，返回后仍停留在当前一级页面。
+  Future<void> _openLearningList() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => const LearningListPage(),
+      ),
+    );
+  }
+
+  /// 底栏中间按钮把首页切回前台，并让专注任务卡片滚动到可见位置。
+  void _openFocus() {
+    if (_currentIndex != 0) {
+      _selectPage(0);
+    }
+    setState(() => _focusRequestGeneration += 1);
+  }
+
   /// 处理 Android 系统返回：搜索页和“我的”页先回首页，首页再交给系统退出。
   void _handleSystemBack(bool didPop, Object? result) {
     if (didPop || _transitionTo != null || _currentIndex == 0) {
@@ -113,6 +145,7 @@ class _MainShellState extends State<MainShell>
         onSearchRequested: _openSearch,
         onProfileRequested: _openProfile,
         refreshGeneration: _homeRefreshGeneration,
+        focusRequest: _focusRequestGeneration,
       ),
       SearchPage(onBackRequested: workspace ? null : _openHome),
       ProfilePage(onBackRequested: workspace ? null : _openHome),
@@ -160,6 +193,119 @@ class _MainShellState extends State<MainShell>
         ),
       ],
       onDestinationSelected: _selectPage,
+    );
+  }
+
+  /// 创建仿 B 站手机底栏：五等分格，中间是凸起的专注按钮。
+  Widget _buildBottomBar() {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(top: BorderSide(color: AppTheme.ruleOf(context))),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 58,
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: _buildBottomBarItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
+                  label: '首页',
+                  selected: _currentIndex == 0,
+                  onTap: _openHome,
+                ),
+              ),
+              Expanded(
+                child: _buildBottomBarItem(
+                  icon: Icons.rss_feed,
+                  activeIcon: Icons.rss_feed,
+                  label: '关注',
+                  selected: false,
+                  onTap: _openSubscriptions,
+                ),
+              ),
+              SizedBox(width: 72, child: Center(child: _buildFocusButton())),
+              Expanded(
+                child: _buildBottomBarItem(
+                  icon: Icons.checklist_rounded,
+                  activeIcon: Icons.checklist_rounded,
+                  label: '清单',
+                  selected: false,
+                  onTap: _openLearningList,
+                ),
+              ),
+              Expanded(
+                child: _buildBottomBarItem(
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
+                  label: '我的',
+                  selected: _currentIndex == 2,
+                  onTap: _openProfile,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 创建底栏的图标加文字格；选中时使用唯一强调色，未选中保持中性灰。
+  Widget _buildBottomBarItem({
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final Color color = selected ? colors.primary : colors.onSurfaceVariant;
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Icon(selected ? activeIcon : icon, size: 24, color: color),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 11,
+              height: 1.1,
+              color: color,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 创建底栏中间凸起的专注按钮，向上偏移以越出底栏边界。
+  Widget _buildFocusButton() {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Transform.translate(
+      offset: const Offset(0, -8),
+      child: Material(
+        color: colors.primary,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: InkWell(
+          key: const Key('bottom-bar-focus'),
+          borderRadius: BorderRadius.circular(16),
+          onTap: _openFocus,
+          child: SizedBox(
+            width: 52,
+            height: 52,
+            child: Icon(Icons.timer_rounded, size: 26, color: colors.onPrimary),
+          ),
+        ),
+      ),
     );
   }
 
@@ -272,7 +418,12 @@ class _MainShellState extends State<MainShell>
                   ],
                 );
               }
-              return ClipRect(child: pageStack);
+              return Column(
+                children: <Widget>[
+                  Expanded(child: pageStack),
+                  _buildBottomBar(),
+                ],
+              );
             },
           ),
         ),
