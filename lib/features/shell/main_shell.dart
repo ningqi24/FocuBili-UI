@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_bottom_navbar_plus/liquid_glass_bottom_navbar_plus.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/layout/adaptive_layout.dart';
 import '../../core/theme/app_theme.dart';
@@ -354,53 +354,62 @@ class _MainShellState extends State<MainShell>
     );
   }
 
-  /// 创建 iOS 26 液态玻璃底栏；沿用静谧蓝强调色与中性灰图标，避免新增鲜艳色。
+  /// 创建液态玻璃底栏；沿用静谧蓝强调色与中性灰图标，避免新增鲜艳色。
   Widget _buildLiquidGlassBar() {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    final TextStyle labelStyle = TextStyle(
-      fontSize: 10,
-      height: 1.1,
-      fontWeight: FontWeight.w500,
-      color: colors.onSurfaceVariant,
-    );
-    return LiquidGlassBottomBar(
-      key: const Key('liquid-glass-bottom-bar'),
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-      items: const <LiquidGlassBarItem>[
-        LiquidGlassBarItem(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home_rounded),
-          label: '首页',
-        ),
-        LiquidGlassBarItem(icon: Icon(Icons.rss_feed), label: '关注'),
-        LiquidGlassBarItem(
-          icon: Icon(Icons.timer_outlined),
-          selectedIcon: Icon(Icons.timer_rounded),
-          label: '专注',
-        ),
-        LiquidGlassBarItem(icon: Icon(Icons.checklist_rounded), label: '清单'),
-        LiquidGlassBarItem(
-          icon: Icon(Icons.person_outline_rounded),
-          selectedIcon: Icon(Icons.person_rounded),
-          label: '我的',
-        ),
-      ],
-      selectedIndex: _bottomBarSelectedIndex,
-      onDestinationSelected: _handleBottomBarDestination,
-      // 中等厚度和轻微磨砂，保证玻璃质感的同时不影响背后内容可读性。
-      settings: const LiquidGlassSettings(
-        thickness: 10,
-        blur: 3,
-        saturation: 1.4,
-      ),
-      theme: LiquidGlassBarTheme(
-        iconColor: colors.onSurfaceVariant,
+    return SafeArea(
+      top: false,
+      left: false,
+      right: false,
+      child: GlassTabBar.bottom(
+        key: const Key('liquid-glass-bottom-bar'),
+        tabs: <GlassTab>[
+          GlassTab(
+            icon: const Icon(Icons.home_outlined),
+            activeIcon: const Icon(Icons.home_rounded),
+            label: '首页',
+            semanticLabel: '首页',
+          ),
+          GlassTab(
+            icon: const Icon(Icons.rss_feed),
+            label: '关注',
+            semanticLabel: '关注',
+          ),
+          GlassTab(
+            icon: const Icon(Icons.timer_outlined),
+            activeIcon: const Icon(Icons.timer_rounded),
+            label: '专注',
+            semanticLabel: '专注',
+          ),
+          GlassTab(
+            icon: const Icon(Icons.checklist_rounded),
+            label: '清单',
+            semanticLabel: '清单',
+          ),
+          GlassTab(
+            icon: const Icon(Icons.person_outline_rounded),
+            activeIcon: const Icon(Icons.person_rounded),
+            label: '我的',
+            semanticLabel: '我的',
+          ),
+        ],
+        selectedIndex: _bottomBarSelectedIndex,
+        onTabSelected: _handleBottomBarDestination,
         selectedIconColor: colors.primary,
-        pillColor: colors.primary.withValues(alpha: 0.14),
-        labelStyle: labelStyle,
-        selectedLabelStyle: labelStyle.copyWith(
-          color: colors.primary,
-          fontWeight: FontWeight.w600,
+        selectedLabelColor: colors.primary,
+        unselectedIconColor: colors.onSurfaceVariant,
+        unselectedLabelColor: colors.onSurfaceVariant,
+        indicatorColor: colors.primary.withValues(alpha: 0.16),
+        horizontalPadding: 16,
+        verticalPadding: 12,
+        barHeight: 58,
+        // 真实折射需要足够厚度；半径过大反而变成模糊圆盘，这里保持克制的玻璃感。
+        settings: const LiquidGlassSettings(
+          blur: 8,
+          thickness: 22,
+          saturation: 1.6,
+          chromaticAberration: 0.02,
+          lightIntensity: 0.55,
         ),
       ),
     );

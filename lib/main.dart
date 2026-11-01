@@ -7,6 +7,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:desktop_webview_window/desktop_webview_window.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -112,6 +113,10 @@ Future<void> main(List<String> args) async {
     return;
   }
   _installProblemDiagnostics();
+  // 液态玻璃底栏需要预先载入着色器，避免首帧出现空白或闪烁；失败时继续启动。
+  try {
+    await LiquidGlassWidgets.initialize(enablePerformanceMonitor: false);
+  } catch (_) {}
   // 布局只在启动时载入；设置页明确提示重启，避免播放中强制旋转。
   try {
     await const AppLayoutPreferencesService().initialize();
@@ -159,5 +164,11 @@ Future<void> main(List<String> args) async {
   SystemChrome.setSystemUIOverlayStyle(
     AppTheme.systemOverlayStyle(Brightness.light),
   );
-  runApp(const FocuBiliApp(checkForUpdatesOnStart: true));
+  runApp(
+    LiquidGlassWidgets.wrap(
+      // MaterialApp 下必须桥接应用主题的明暗，否则玻璃边框和阴影在系统深色模式下会错位。
+      brightnessResolver: Theme.maybeBrightnessOf,
+      child: const FocuBiliApp(checkForUpdatesOnStart: true),
+    ),
+  );
 }
