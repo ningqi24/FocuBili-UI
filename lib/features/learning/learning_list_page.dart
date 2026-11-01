@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/layout/adaptive_page_frame.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/learning_list_entry.dart';
 import '../../services/bilibili_service.dart';
 import '../../services/learning_list_service.dart';
@@ -96,9 +97,14 @@ class _LearningListPageState extends State<LearningListPage> {
     setState(() => _query = value.trim().toLowerCase());
   }
 
-  /// 判断一条任务是否匹配标题、UP 主、分 P 标题或 P 序号的本机搜索词。
+  /// 判断一条任务是否匹配当前状态筛选和本机搜索词。
   bool _matchesQuery(LearningListEntry entry) {
     if (_statusFilter != null && entry.status != _statusFilter) return false;
+    return _matchesTextQuery(entry);
+  }
+
+  /// 判断一条任务是否匹配标题、UP 主、分 P 标题或 P 序号的本机搜索词。
+  bool _matchesTextQuery(LearningListEntry entry) {
     if (_query.isEmpty) {
       return true;
     }
@@ -321,25 +327,68 @@ class _LearningListPageState extends State<LearningListPage> {
     }
   }
 
-  /// 将视频时间格式化为 mm:ss 或 h:mm:ss，供任务进度与分 P 时间显示。
-  String _formatPosition(Duration value) {
-    final int seconds = value.inSeconds.clamp(0, 24 * 60 * 60);
-    final int hours = seconds ~/ 3600;
-    final int minutes = (seconds % 3600) ~/ 60;
-    final int rest = seconds % 60;
-    return hours > 0
-        ? '$hours:${minutes.toString().padLeft(2, '0')}:${rest.toString().padLeft(2, '0')}'
-        : '$minutes:${rest.toString().padLeft(2, '0')}';
+  // 每周目标任务数
+  static const int _weeklyGoalTasks = 5;
+
+  /// 返回最近 7 天内标记完成的任务数，作为本周进度概览的计算口径。
+  int get _weekDoneCount {
+    final DateTime weekStart = DateTime.now().subtract(const Duration(days: 7));
+    return _entries
+        .where(
+          (LearningListEntry entry) =>
+              entry.status == LearningListStatus.completed &&
+              entry.updatedAt.isAfter(weekStart),
+        )
+        .length;
   }
 
-  /// 为三种学习状态返回稳定且有区分度的主题颜色。
-  Color _statusColor(BuildContext context, LearningListStatus status) {
+  /// 把更新时间格式化为“今天 / 昨天 / N 天前 / M 月 D 日”式相对时间。
+  String _formatRelativeDate(DateTime value) {
+    final DateTime now = DateTime.now();
+    final int days = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).difference(DateTime(value.year, value.month, value.day)).inDays;
+    if (days <= 0) return '今天';
+    if (days == 1) return '昨天';
+    if (days < 7) return '$days 天前';
+    return '${value.month} 月 ${value.day} 日';
+  }
+
+  /// 返回任务行元信息：学习中显示百分比，未开始显示时长，已完成显示更新时间。
+  String _entryMetaText(LearningListEntry entry, double progress) {
+    switch (entry.status) {
+      case LearningListStatus.learning:
+        return '已学 ${(progress * 100).round()}%';
+      case LearningListStatus.notStarted:
+        return entry.duration > Duration.zero
+            ? '约 ${entry.duration.inMinutes} 分钟'
+            : '时长未知';
+      case LearningListStatus.completed:
+        return _formatRelativeDate(entry.updatedAt);
+    }
+  }
+
+  /// 创建中性药丸状态徽标，强调色只留给进度、CTA 与选中态。
+  Widget _buildStatusBadge(LearningListStatus status) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return switch (status) {
-      LearningListStatus.notStarted => colors.outline,
-      LearningListStatus.learning => colors.primary,
-      LearningListStatus.completed => Colors.green.shade700,
-    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppTheme.sunkenOf(context),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppTheme.ruleOf(context)),
+      ),
+      child: Text(
+        status.label,
+        style: textTheme.labelSmall?.copyWith(
+          color: colors.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 
   /// 创建无网络封面或图片加载失败时的本地占位区域。
@@ -357,9 +406,12 @@ class _LearningListPageState extends State<LearningListPage> {
 
   /// 创建学习任务封面缺失时使用的固定视频图标。
   Widget _buildThumbnailPlaceholder() {
-    return const ColoredBox(
-      color: Colors.black12,
-      child: Center(child: Icon(Icons.menu_book_outlined)),
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: AppTheme.sunkenOf(context),
+      child: Center(
+        child: Icon(Icons.menu_book_outlined, color: colors.onSurfaceVariant),
+      ),
     );
   }
 
@@ -393,26 +445,61 @@ class _LearningListPageState extends State<LearningListPage> {
                     }),
                   )
                 : SizedBox(
-                    width: 88,
-                    height: 54,
+                    width: 96,
+                    height: 60,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       child: _buildThumbnail(entry),
                     ),
                   ),
-            title: Text(
-              entry.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                'P${entry.partPageNumber} ${entry.partTitle}\n${entry.ownerName}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  entry.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: <Widget>[
+                    _buildStatusBadge(entry.status),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'P${entry.partPageNumber} ${entry.partTitle} · ${entry.ownerName}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: completed ? 1 : progress,
+                        minHeight: 5,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      _entryMetaText(entry, progress),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -441,7 +528,13 @@ class _LearningListPageState extends State<LearningListPage> {
                                       status == entry.status
                                           ? Icons.check_circle_rounded
                                           : Icons.circle_outlined,
-                                      color: _statusColor(context, status),
+                                      color: status == entry.status
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.primary
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                       size: 18,
                                     ),
                                     const SizedBox(width: 8),
@@ -469,39 +562,11 @@ class _LearningListPageState extends State<LearningListPage> {
                 ? null
                 : () => unawaited(_openEntry(entry)),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 5,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '${_formatPosition(entry.position)} / ${_formatPosition(entry.duration)}',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ],
-            ),
-          ),
+          Divider(height: 1, thickness: 1, color: AppTheme.ruleOf(context)),
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 2, 8, 6),
             child: Row(
               children: <Widget>[
-                Icon(
-                  Icons.circle,
-                  size: 9,
-                  color: _statusColor(context, entry.status),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  entry.status.label,
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
                 const Spacer(),
                 TextButton.icon(
                   key: Key('continue-learning-${entry.stableId}'),
@@ -539,8 +604,88 @@ class _LearningListPageState extends State<LearningListPage> {
     );
   }
 
-  /// 创建拖拽排序前的说明，搜索时提示用户清空关键词后再调整完整顺序。
+  /// 创建置顶的本周进度概览卡：标签、大号百分比、进度条和周目标提示行。
+  Widget _buildWeeklyProgressCard() {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final int weekDone = _weekDoneCount;
+    final double percent = (weekDone / _weeklyGoalTasks).clamp(0, 1).toDouble();
+    final int remaining = weekDone >= _weeklyGoalTasks
+        ? 0
+        : _weeklyGoalTasks - weekDone;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    '本周进度',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${(percent * 100).round()}%',
+                  style: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            LinearProgressIndicator(
+              value: percent,
+              minHeight: 6,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: <Widget>[
+                Icon(
+                  remaining == 0 ? Icons.task_alt_rounded : Icons.flag_outlined,
+                  size: 15,
+                  color: colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    remaining == 0 ? '本周目标已达成' : '再完成 $remaining 个任务即可达成周目标',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 创建页头副文案、本周进度概览卡、带计数的筛选 chips 和拖拽排序说明。
   Widget _buildListHeader() {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final int completedTotal = _entries
+        .where(
+          (LearningListEntry entry) =>
+              entry.status == LearningListStatus.completed,
+        )
+        .length;
+    final List<LearningListEntry> matched = _entries
+        .where((LearningListEntry entry) => _matchesTextQuery(entry))
+        .toList(growable: false);
+    int countOf(LearningListStatus status) => matched
+        .where((LearningListEntry entry) => entry.status == status)
+        .length;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Column(
@@ -548,17 +693,43 @@ class _LearningListPageState extends State<LearningListPage> {
         children: <Widget>[
           if (_learningListService.readFailed)
             const Text('学习清单读取失败，原数据保留。请重试。'),
+          Text(
+            '${_entries.length} 个任务 · 已完成 $completedTotal 个',
+            style: textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildWeeklyProgressCard(),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 8,
-            children: [
+            runSpacing: 8,
+            children: <Widget>[
               ChoiceChip(
                 label: const Text('全部'),
+                showCheckmark: false,
                 selected: _statusFilter == null,
                 onSelected: (_) => setState(() => _statusFilter = null),
               ),
-              for (final status in LearningListStatus.values)
+              for (final (LearningListStatus status, int count)
+                  in <(LearningListStatus, int)>[
+                    (
+                      LearningListStatus.learning,
+                      countOf(LearningListStatus.learning),
+                    ),
+                    (
+                      LearningListStatus.notStarted,
+                      countOf(LearningListStatus.notStarted),
+                    ),
+                    (
+                      LearningListStatus.completed,
+                      countOf(LearningListStatus.completed),
+                    ),
+                  ])
                 ChoiceChip(
-                  label: Text(status.label),
+                  label: Text('${status.label}（$count）'),
+                  showCheckmark: false,
                   selected: _statusFilter == status,
                   onSelected: (_) => setState(() => _statusFilter = status),
                 ),
@@ -592,6 +763,7 @@ class _LearningListPageState extends State<LearningListPage> {
                   ),
               ],
             ),
+          const SizedBox(height: 12),
           Text(
             _query.isEmpty ? '待学习' : '搜索结果',
             style: Theme.of(
@@ -653,7 +825,7 @@ class _LearningListPageState extends State<LearningListPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Text(
-                  '已完成（${completedEntries.length}）',
+                  '已完成 · ${completedEntries.length}',
                   style: Theme.of(
                     context,
                   ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -731,7 +903,9 @@ class _LearningListPageState extends State<LearningListPage> {
         actions: <Widget>[
           IconButton(
             tooltip: _selecting ? '结束多选' : '多选管理',
-            icon: Icon(_selecting ? Icons.close : Icons.checklist),
+            icon: Icon(
+              _selecting ? Icons.close_rounded : Icons.checklist_rounded,
+            ),
             onPressed: () => setState(() {
               _selecting = !_selecting;
               _selected.clear();

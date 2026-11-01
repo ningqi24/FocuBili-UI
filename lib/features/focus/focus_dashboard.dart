@@ -5,13 +5,16 @@ import '../subscriptions/subscription_home_card.dart';
 import '../subscriptions/subscription_introduction.dart';
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show ScrollDirection, SliverConstraints;
+import 'package:flutter/rendering.dart'
+    show RenderBox, RenderObject, ScrollDirection, SliverConstraints;
 
 import '../../core/layout/adaptive_layout.dart';
 import '../../core/router/app_router.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/widgets/editable_card_board.dart';
 import '../../services/dashboard_layout_service.dart';
 import '../../models/focus_session.dart';
@@ -71,9 +74,22 @@ class _FocusDashboardState extends State<FocusDashboard> {
   static const double _homeSnapOvershoot = 220;
   static const double _homeReverseSnapDistance = 120;
 
+  /// 每日专注目标（分钟），首页「今日专注目标」仪表盘的进度基准。
+  static const int _dailyGoalMinutes = 150;
+
   final TextEditingController _goalController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   GlobalKey _homeBoardKey = GlobalKey(debugLabel: 'home-card-board');
+
+  /// 专注任务卡片的定位键，供首屏「开始专注」一步滚动直达。
+  final GlobalKey _focusSessionCardKey = GlobalKey(
+    debugLabel: 'focus-session-card',
+  );
+
+  /// 订阅引导组件的实测键，首屏高度按其真实高度预留。
+  final GlobalKey _subscriptionIntroKey = GlobalKey(
+    debugLabel: 'subscription-intro',
+  );
   late final DashboardLayoutService _homeLayouts =
       widget.layoutService ?? DashboardLayoutService();
   late final SubscriptionService _subscriptions =
@@ -83,6 +99,7 @@ class _FocusDashboardState extends State<FocusDashboard> {
   }
 
   Widget _buildSubscriptionIntroduction() => SubscriptionIntroduction(
+    key: _subscriptionIntroKey,
     service: _subscriptions,
     layoutService: _homeLayouts,
     onVisibilityChanged: (visible) {
@@ -157,10 +174,10 @@ class _FocusDashboardState extends State<FocusDashboard> {
   }
 
   /// 在一次拖动结束后把首屏或卡片区吸附到完整的阅读位置。
+  /// 吸附不受首屏动画开关影响：首屏高于视口（大字体/矮屏）时仍保留两档吸附。
   void _handleHomeScrollEnd(BuildContext context) {
     if (widget.onOpenProfile == null ||
         _editingHomeCards ||
-        !_canAnimateHomeHero(context) ||
         _isSnappingHomeScroll ||
         !_scrollController.hasClients) {
       return;
@@ -428,6 +445,31 @@ class _FocusDashboardState extends State<FocusDashboard> {
         '${local.minute.toString().padLeft(2, '0')}';
   }
 
+  /// 汇总本周（周一起）已记录的专注次数与累计时长，供计时卡底部轻量展示。
+  String _weekFocusSummary() {
+    final DateTime now = DateTime.now();
+    final DateTime weekStart = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: now.weekday - 1));
+    int count = 0;
+    Duration total = Duration.zero;
+    for (final FocusSession session in widget.controller.history) {
+      final DateTime? finished = session.finishedAt?.toLocal();
+      if (finished == null || finished.isBefore(weekStart)) {
+        continue;
+      }
+      count += 1;
+      total += session.accumulatedFocusDuration;
+    }
+    final int hours = total.inHours;
+    final String durationText = hours > 0
+        ? '$hours 小时 ${total.inMinutes % 60} 分'
+        : '${total.inMinutes} 分';
+    return '本周已专注 $count 次 · 累计 $durationText';
+  }
+
   /// 创建目标输入、时长快捷选项和开始按钮组成的空闲卡片。
   Widget _buildReadyCard(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -535,24 +577,42 @@ class _FocusDashboardState extends State<FocusDashboard> {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 18),
-            Text(
-              session.completeOnPartEnd
-                  ? '等待当前分P完播 · ${_formatCountdown(widget.controller.remainingDuration)}'
-                  : _formatCountdown(widget.controller.remainingDuration),
-              key: const Key('focus-countdown'),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.displayMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+            const SizedBox(height: 14),
+            // 一屏一环：计时数字居中放在品牌静谧蓝环内，等宽数字稳定阅读。
+            Center(
+              child: SizedBox.square(
+                dimension: 208,
+                child: CustomPaint(
+                  painter: _FocusRingPainter(
+                    progress: widget.controller.progress,
+                    color: theme.colorScheme.primary,
+                    trackColor: AppTheme.sunkenOf(context),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _formatCountdown(widget.controller.remainingDuration),
+                      key: const Key('focus-countdown'),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.displayMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontFeatures: const <FontFeature>[
+                          FontFeature.tabularFigures(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(
-              key: const Key('focus-progress'),
-              value: widget.controller.progress,
-              minHeight: 8,
-              borderRadius: BorderRadius.circular(999),
+            const SizedBox(height: 10),
+            Text(
+              session.completeOnPartEnd
+                  ? '等待当前分P完播 · 目标 ${session.plannedDuration.inMinutes} 分钟'
+                  : '剩余 · 目标 ${session.plannedDuration.inMinutes} 分钟',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             if (session.latestInterruptionReason != null) ...<Widget>[
               const SizedBox(height: 10),
@@ -669,6 +729,14 @@ class _FocusDashboardState extends State<FocusDashboard> {
               onPressed: () => unawaited(_extendFocus()),
               icon: const Icon(Icons.more_time_rounded),
               label: const Text('+5 分钟'),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _weekFocusSummary(),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -899,4 +967,56 @@ class _FocusMetric extends StatelessWidget {
       ],
     );
   }
+}
+
+/// 绘制专注计时环：中性底环上用品牌静谧蓝描出已完成进度。
+class _FocusRingPainter extends CustomPainter {
+  /// 创建计时环画笔，进度取值 0 到 1。
+  const _FocusRingPainter({
+    required this.progress,
+    required this.color,
+    required this.trackColor,
+  });
+
+  /// 已完成的专注进度比例。
+  final double progress;
+
+  /// 进度环颜色，使用主题强调色。
+  final Color color;
+
+  /// 未完成底环颜色，使用中性凹槽色。
+  final Color trackColor;
+
+  /// 先画完整底环，再从顶部顺时针描出进度弧。
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Offset center = size.center(Offset.zero);
+    final double radius = size.shortestSide / 2 - 9;
+    final Rect arcRect = Rect.fromCircle(center: center, radius: radius);
+    final Paint track = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10
+      ..strokeCap = StrokeCap.round
+      ..color = trackColor;
+    canvas.drawCircle(center, radius, track);
+    final Paint arc = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10
+      ..strokeCap = StrokeCap.round
+      ..color = color;
+    canvas.drawArc(
+      arcRect,
+      -math.pi / 2,
+      2 * math.pi * progress.clamp(0, 1),
+      false,
+      arc,
+    );
+  }
+
+  /// 进度、颜色变化时重绘。
+  @override
+  bool shouldRepaint(_FocusRingPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.color != color ||
+      oldDelegate.trackColor != trackColor;
 }
