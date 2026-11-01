@@ -88,8 +88,10 @@ class _PersonalizationSettingsPageState
   bool _searchHistoryEnabled = true;
   bool _watchHistoryEnabled = true;
   bool _wbiSigningEnabled = false;
+  bool _liquidGlassBottomBar = false;
   final TextEditingController _settingsSearch = TextEditingController();
   bool _savingBehaviorPreference = false;
+  bool _savingBottomBarStyle = false;
   _SettingsLevel _settingsLevel = _SettingsLevel.overview;
   late final AppUpdateController _fallbackUpdateController;
   late final AppThemeModeController _fallbackThemeModeController;
@@ -165,6 +167,8 @@ class _PersonalizationSettingsPageState
           .loadWatchHistoryEnabled();
       final bool wbiSigningEnabled = await _behaviorPreferencesService
           .loadWbiSigningEnabled();
+      final bool liquidGlassBottomBar = await _behaviorPreferencesService
+          .loadLiquidGlassBottomBar();
       final bool hasDoNotDisturbAccess =
           widget.focusNotificationService.supportsDoNotDisturb
           ? await widget.focusNotificationService.hasDoNotDisturbAccess()
@@ -181,6 +185,7 @@ class _PersonalizationSettingsPageState
         _searchHistoryEnabled = searchHistoryEnabled;
         _watchHistoryEnabled = watchHistoryEnabled;
         _wbiSigningEnabled = wbiSigningEnabled;
+        _liquidGlassBottomBar = liquidGlassBottomBar;
         _hasDoNotDisturbAccess = hasDoNotDisturbAccess;
         _loading = false;
       });
@@ -265,6 +270,36 @@ class _PersonalizationSettingsPageState
     saveValue: _behaviorPreferencesService.saveWbiSigningEnabled,
     failureMessage: 'WBI 签名设置保存失败，请稍后重试。',
   );
+
+  /// 保存底栏风格；写入成功后共享偏好广播会让主框架立即切换底栏。
+  Future<void> _setLiquidGlassBottomBar(bool enabled) async {
+    if (_savingBottomBarStyle) {
+      return;
+    }
+    final bool previous = _liquidGlassBottomBar;
+    setState(() {
+      _liquidGlassBottomBar = enabled;
+      _savingBottomBarStyle = true;
+    });
+    try {
+      if (!await _behaviorPreferencesService.saveLiquidGlassBottomBar(
+        enabled,
+      )) {
+        throw StateError('无法保存底栏风格');
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _liquidGlassBottomBar = previous);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('底栏风格保存失败，请稍后重试。')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _savingBottomBarStyle = false);
+      }
+    }
+  }
 
   /// 保存前台剪贴板检测开关；失败时恢复原值并显示说明。
   Future<void> _setWindowsClipboardDetectionEnabled(bool enabled) async {
@@ -1147,6 +1182,17 @@ class _PersonalizationSettingsPageState
           ),
         ),
         _buildThemeColorTile(themeModeController),
+        SwitchListTile.adaptive(
+          key: const Key('enable-liquid-glass-bottom-bar'),
+          value: _liquidGlassBottomBar,
+          // 底栏风格开关立即生效；主框架监听共享偏好广播并重建底栏。
+          onChanged: _savingBottomBarStyle ? null : _setLiquidGlassBottomBar,
+          secondary: const Icon(Icons.blur_on_rounded),
+          title: const Text('液态玻璃底栏'),
+          subtitle: const Text(
+            '使用 iOS 26 液态玻璃风格底栏；关闭后恢复 B站 式五格底栏。横屏平板仍使用左侧导航。',
+          ),
+        ),
         ListTile(
           key: const Key('open-android-permissions'),
           leading: const Icon(Icons.admin_panel_settings_outlined),

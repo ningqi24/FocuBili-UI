@@ -434,6 +434,43 @@ void main() {
     expect(await behaviorService.loadWatchHistoryEnabled(), isFalse);
   });
 
+  /// 验证液态玻璃底栏开关默认关闭，保存后广播给主框架即时切换。
+  testWidgets('液态玻璃底栏开关默认关闭并可保存', (WidgetTester tester) async {
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    final AppBehaviorPreferencesService behaviorService =
+        AppBehaviorPreferencesService(
+          preferencesLoader: () async => preferences,
+        );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PersonalizationSettingsPage(
+          appPlatform: AppPlatform.android,
+          behaviorPreferencesService: behaviorService,
+          focusNotificationService: FocusNotificationService(channel: channel),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openSettingsLevel(
+      tester,
+      const Key('open-appearance-application-settings'),
+    );
+
+    final Finder toggle = find.byKey(
+      const Key('enable-liquid-glass-bottom-bar'),
+    );
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
+    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+
+    final int changesBefore = AppBehaviorPreferencesService.changes.value;
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+    expect(await behaviorService.loadLiquidGlassBottomBar(), isTrue);
+    expect(AppBehaviorPreferencesService.changes.value, changesBefore + 1);
+  });
+
   /// 验证 Windows 开关只保存“开始时提醒”，不会继续声称能够自动修改系统专注。
   testWidgets('Windows 设置页如实说明系统专注需要手动启动', (WidgetTester tester) async {
     final SharedPreferences preferences = await SharedPreferences.getInstance();

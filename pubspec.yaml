@@ -52,6 +52,8 @@ dependencies:
   # 使用 Flutter 官方中文 Material 文案，让日期、时间和系统选择器保持中文。
   flutter_localizations:
     sdk: flutter
+  # iOS 26 液态玻璃底栏；Android 走 Impeller 折射，桌面和测试环境自动回退磨砂玻璃。
+  liquid_glass_bottom_navbar_plus: ^0.0.1
   # 8.3.1 兼容项目当前 AGP 8.11.1；9+ 要求 AGP 8.12.1/Kotlin 2.2。
   package_info_plus: ^8.3.1
   path_provider: ^2.1.6

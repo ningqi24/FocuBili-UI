@@ -7,6 +7,7 @@ import 'package:focubili/core/router/app_router.dart';
 import 'package:focubili/features/focus/focus_timer_controller.dart';
 import 'package:focubili/features/focus/focus_timer_scope.dart';
 import 'package:focubili/features/shell/main_shell.dart';
+import 'package:focubili/services/app_behavior_preferences_service.dart';
 
 /// 在固定手机尺寸中创建主框架，并注入已经初始化的专注控制器。
 Future<void> _pumpMainShell(WidgetTester tester) async {
@@ -124,6 +125,23 @@ void main() {
       find.byKey(const Key('search-input-field')),
     );
     expect(restoredSearchInput.controller?.text, '原有搜索');
+  });
+
+  /// 验证开启液态玻璃后底栏换成玻璃胶囊，五格跳转仍然可用。
+  testWidgets('液态玻璃底栏保留五格跳转', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      AppBehaviorPreferencesService.liquidGlassBottomBarKey: true,
+    });
+    await _pumpMainShell(tester);
+
+    final Finder bar = find.byKey(const Key('liquid-glass-bottom-bar'));
+    expect(bar, findsOneWidget);
+    expect(find.byKey(const Key('bottom-bar-focus')), findsNothing);
+
+    await tester.tap(find.descendant(of: bar, matching: find.text('清单')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('search-learning-list')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   /// 验证横屏平板通过左侧导航直接切换三个一级页面，子页不再显示返回首页按钮。

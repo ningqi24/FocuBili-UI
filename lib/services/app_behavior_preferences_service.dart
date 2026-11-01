@@ -21,6 +21,10 @@ class AppBehaviorPreferencesService {
       'app_behavior.watch_history_enabled';
   static const String _wbiSigningEnabledKey =
       'app_behavior.wbi_signing_enabled';
+
+  /// 液态玻璃底栏开关的存储键，主框架和设置页共用同一键读取当前风格。
+  static const String liquidGlassBottomBarKey =
+      'app_behavior.liquid_glass_bottom_bar';
   final AppBehaviorPreferencesLoader _preferencesLoader;
 
   /// 读取账号只读开关；没有旧配置或读取失败时默认开启以保护账号。
@@ -60,6 +64,14 @@ class AppBehaviorPreferencesService {
   /// 保存播放请求签名开关，写入失败时让设置页恢复原值。
   Future<bool> saveWbiSigningEnabled(bool enabled) =>
       _saveBool(_wbiSigningEnabledKey, enabled);
+
+  /// 读取底栏风格开关；没有旧配置或读取失败时使用经典 B站 底栏。
+  Future<bool> loadLiquidGlassBottomBar() =>
+      _loadBool(liquidGlassBottomBarKey, defaultValue: false);
+
+  /// 保存底栏风格开关；写入成功后通知主框架立即切换底栏样式。
+  Future<bool> saveLiquidGlassBottomBar(bool enabled) =>
+      _saveBool(liquidGlassBottomBarKey, enabled);
 
   /// 从本机读取布尔偏好；存储不可用时使用调用方指定的安全默认值。
   Future<bool> _loadBool(String key, {required bool defaultValue}) async {

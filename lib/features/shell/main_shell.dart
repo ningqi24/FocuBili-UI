@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_bottom_navbar_plus/liquid_glass_bottom_navbar_plus.dart';
 
 import '../../core/layout/adaptive_layout.dart';
 import '../../core/theme/app_theme.dart';
+import '../../services/app_behavior_preferences_service.dart';
 import '../home/home_page.dart';
 import '../learning/learning_list_page.dart';
 import '../profile/profile_page.dart';
@@ -23,10 +25,14 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
   late final AnimationController _navigationController;
+  late final AppBehaviorPreferencesService _behaviorPreferences;
   int _currentIndex = 0;
   int? _transitionFrom;
   int? _transitionTo;
   int _homeRefreshGeneration = 0;
+
+  /// 是否使用 iOS 26 液态玻璃底栏；关闭时保持经典 B站 五格底栏。
+  bool _liquidGlassBottomBar = false;
 
   /// 递增后让首页滚动到专注任务卡片，底栏中间按钮据此一步直达专注。
   int _focusRequestGeneration = 0;
@@ -39,6 +45,26 @@ class _MainShellState extends State<MainShell>
       vsync: this,
       duration: const Duration(milliseconds: 360),
     )..addStatusListener(_handleNavigationStatus);
+    _behaviorPreferences = AppBehaviorPreferencesService();
+    AppBehaviorPreferencesService.changes.addListener(
+      _handleBehaviorPreferencesChanged,
+    );
+    unawaited(_loadBottomBarStyle());
+  }
+
+  /// 读取底栏风格偏好；读取失败时继续使用当前样式，保证主框架始终可用。
+  Future<void> _loadBottomBarStyle() async {
+    final bool liquidGlass = await _behaviorPreferences
+        .loadLiquidGlassBottomBar();
+    if (!mounted || liquidGlass == _liquidGlassBottomBar) {
+      return;
+    }
+    setState(() => _liquidGlassBottomBar = liquidGlass);
+  }
+
+  /// 设置页保存成功后广播偏好变化，主框架据此立即切换底栏样式。
+  void _handleBehaviorPreferencesChanged() {
+    unawaited(_loadBottomBarStyle());
   }
 
   /// 切换到指定一级页面；只让当前页和目标页参与直接滑入动画。
@@ -128,6 +154,25 @@ class _MainShellState extends State<MainShell>
       _selectPage(0);
     }
     setState(() => _focusRequestGeneration += 1);
+  }
+
+  /// 玻璃底栏的五格索引；搜索页属于首页入口，保持首页高亮。
+  int get _bottomBarSelectedIndex => _currentIndex == 2 ? 4 : 0;
+
+  /// 玻璃底栏点击分派；中间专注项复用首页直达专注卡片的逻辑。
+  void _handleBottomBarDestination(int index) {
+    switch (index) {
+      case 0:
+        _openHome();
+      case 1:
+        unawaited(_openSubscriptions());
+      case 2:
+        _openFocus();
+      case 3:
+        unawaited(_openLearningList());
+      case 4:
+        _openProfile();
+    }
   }
 
   /// 处理 Android 系统返回：搜索页和“我的”页先回首页，首页再交给系统退出。
@@ -309,6 +354,58 @@ class _MainShellState extends State<MainShell>
     );
   }
 
+  /// 创建 iOS 26 液态玻璃底栏；沿用静谧蓝强调色与中性灰图标，避免新增鲜艳色。
+  Widget _buildLiquidGlassBar() {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final TextStyle labelStyle = TextStyle(
+      fontSize: 10,
+      height: 1.1,
+      fontWeight: FontWeight.w500,
+      color: colors.onSurfaceVariant,
+    );
+    return LiquidGlassBottomBar(
+      key: const Key('liquid-glass-bottom-bar'),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      items: const <LiquidGlassBarItem>[
+        LiquidGlassBarItem(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home_rounded),
+          label: '首页',
+        ),
+        LiquidGlassBarItem(icon: Icon(Icons.rss_feed), label: '关注'),
+        LiquidGlassBarItem(
+          icon: Icon(Icons.timer_outlined),
+          selectedIcon: Icon(Icons.timer_rounded),
+          label: '专注',
+        ),
+        LiquidGlassBarItem(icon: Icon(Icons.checklist_rounded), label: '清单'),
+        LiquidGlassBarItem(
+          icon: Icon(Icons.person_outline_rounded),
+          selectedIcon: Icon(Icons.person_rounded),
+          label: '我的',
+        ),
+      ],
+      selectedIndex: _bottomBarSelectedIndex,
+      onDestinationSelected: _handleBottomBarDestination,
+      // 中等厚度和轻微磨砂，保证玻璃质感的同时不影响背后内容可读性。
+      settings: const LiquidGlassSettings(
+        thickness: 10,
+        blur: 3,
+        saturation: 1.4,
+      ),
+      theme: LiquidGlassBarTheme(
+        iconColor: colors.onSurfaceVariant,
+        selectedIconColor: colors.primary,
+        pillColor: colors.primary.withValues(alpha: 0.14),
+        labelStyle: labelStyle,
+        selectedLabelStyle: labelStyle.copyWith(
+          color: colors.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
   /// 创建保持三个一级页面状态的页面堆栈，手机端可选择启用水平切换动画。
   Widget _buildPageStack({
     required List<Widget> pages,
@@ -418,6 +515,20 @@ class _MainShellState extends State<MainShell>
                   ],
                 );
               }
+              if (_liquidGlassBottomBar) {
+                // 玻璃底栏悬浮在页面之上，让列表内容从玻璃背后经过以产生折射。
+                return Stack(
+                  children: <Widget>[
+                    Positioned.fill(child: pageStack),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: _buildLiquidGlassBar(),
+                    ),
+                  ],
+                );
+              }
               return Column(
                 children: <Widget>[
                   Expanded(child: pageStack),
@@ -431,9 +542,12 @@ class _MainShellState extends State<MainShell>
     );
   }
 
-  /// 释放页面动画控制器，避免主框架离开后继续持有动画资源。
+  /// 释放页面动画控制器和偏好监听，避免主框架离开后继续持有动画资源。
   @override
   void dispose() {
+    AppBehaviorPreferencesService.changes.removeListener(
+      _handleBehaviorPreferencesChanged,
+    );
     _navigationController
       ..removeStatusListener(_handleNavigationStatus)
       ..dispose();
