@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 启动标记：圆环 + 中心竖条，与 Flutter Lottie 首页标记保持同一比例。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M164,256a92,92 0,1 0,184 0a92,92 0,1 0,-184 0"
+        android:strokeColor="@color/splash_mark"
+        android:strokeWidth="20" />
+    <path
+        android:fillColor="@color/splash_mark"
+        android:pathData="M245,214h22a11,11 0,0 1,11 11v62a11,11 0,0 1,-11 11h-22a11,11 0,0 1,-11 -11v-62a11,11 0,0 1,11 -11z" />
+</vector>

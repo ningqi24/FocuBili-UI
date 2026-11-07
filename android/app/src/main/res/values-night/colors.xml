@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="icon_bg">#101827</color>
+    <!-- 深色模式启动底色与品牌提亮色，和 Flutter 启动页保持一致。 -->
+    <color name="splash_background">#121216</color>
+    <color name="splash_mark">#8CA6EE</color>
 </resources>

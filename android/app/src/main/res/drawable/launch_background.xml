@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 11 及以下使用品牌底色和真实应用图标，避免启动时只显示空白主题色。 -->
+<!-- Android 11 及以下使用启动页底色和矢量焦点标记，减少首帧跳变。 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/icon_bg" />
+    <item android:drawable="@color/splash_background" />
     <item
         android:width="96dp"
         android:height="96dp"
         android:gravity="center"
-        android:drawable="@mipmap/ic_launcher" />
+        android:drawable="@drawable/ic_splash_mark" />
 </layer-list>

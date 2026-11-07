@@ -16,6 +16,7 @@ import 'features/focus/focus_timer_controller.dart';
 import 'features/focus/focus_timer_scope.dart';
 import 'features/focus/focus_completion_dialog.dart';
 import 'features/onboarding/first_launch_gate.dart';
+import 'features/splash/splash_screen.dart';
 import 'features/player/player_page.dart';
 import 'features/profile/app_theme_mode_controller.dart';
 import 'features/profile/app_text_scale_controller.dart';
@@ -44,6 +45,8 @@ class FocuBiliApp extends StatefulWidget {
     this.subscriptionService,
     this.subscriptionNotificationService,
     this.checkForUpdatesOnStart = false,
+    this.showSplash = false,
+    this.startupTasks,
   });
 
   final FocusTimerController? focusTimerController;
@@ -57,6 +60,12 @@ class FocuBiliApp extends StatefulWidget {
   final SubscriptionService? subscriptionService;
   final SubscriptionNotificationService? subscriptionNotificationService;
   final bool checkForUpdatesOnStart;
+
+  /// 真实启动时先展示启动页；测试默认关闭，直接进入主界面。
+  final bool showSplash;
+
+  /// 与启动动画并行的异步初始化；超时不会阻塞主界面。
+  final Future<void> Function()? startupTasks;
 
   /// 创建持有全应用专注状态的根组件状态。
   @override
@@ -434,9 +443,13 @@ class _FocuBiliAppState extends State<FocuBiliApp> with WidgetsBindingObserver {
       theme: AppTheme.light(seedColor: _appThemeModeController.seedColor),
       darkTheme: AppTheme.dark(seedColor: _appThemeModeController.seedColor),
       themeMode: _appThemeModeController.mode,
-      home: FirstLaunchGate(
-        onReady: _handleFirstLaunchReady,
-        child: const MainShell(),
+      home: SplashGate(
+        enabled: widget.showSplash,
+        warmUp: widget.startupTasks,
+        child: FirstLaunchGate(
+          onReady: _handleFirstLaunchReady,
+          child: const MainShell(),
+        ),
       ),
       onGenerateRoute: AppRouter.onGenerateRoute,
       // 根据实际主题在整棵页面树外层设置系统栏图标颜色，覆盖无 AppBar 的页面。

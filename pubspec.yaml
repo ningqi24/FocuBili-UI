@@ -54,6 +54,8 @@ dependencies:
     sdk: flutter
   # iOS 26 液态玻璃底栏；真实着色器折射，Skia/Web 自动降级，Android 无原生代码。
   liquid_glass_widgets: 1.16.1
+  # 启动页只使用一次淡入/上浮的矢量动画；资源为纯 Shape 层，不引入位图。
+  lottie: ^3.3.1
   # 8.3.1 兼容项目当前 AGP 8.11.1；9+ 要求 AGP 8.12.1/Kotlin 2.2。
   package_info_plus: ^8.3.1
   path_provider: ^2.1.6
@@ -121,6 +123,8 @@ flutter:
   # 保留应用图标源文件，便于 Flutter 页面或其他平台后续复用。
   assets:
     - assets/icon/focubili_icon.png
+    # 启动页矢量动画：单色焦点标记，420ms 上浮淡入，无位图素材。
+    - assets/splash/focubili_splash.json
     # 鼓励语料单独保存，后续可直接编辑文案而无需修改 Dart 逻辑。
     - assets/data/focus_encouragements.json
 

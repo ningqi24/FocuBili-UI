@@ -105,6 +105,33 @@ Future<void> _prepareWindowsDesktop({
   }
 }
 
+/// 启动动画期间并行预热缓存与订阅；失败或超时都不影响主界面。
+Future<void> _warmUpStartup() async {
+  try {
+    await CacheLifecycle.initialize();
+  } catch (_) {}
+  unawaited(ImageResourceCache.cleanLegacyCache());
+  unawaited(
+    ImageResourceCache.instance.status().catchError(
+      (Object _) => const ImageCacheUsage(0, 0, 0),
+    ),
+  );
+  if (PlatformServices.current.capabilities.mediaCacheBackend ==
+      MediaCacheBackendKind.windowsMediaKit) {
+    try {
+      await WindowsMediaCacheService().maintain();
+    } catch (_) {}
+  }
+  // Reconcile persisted opt-in after an upgrade/restart; disabled by default.
+  try {
+    await SubscriptionService.instance.initialize();
+    await SubscriptionService.instance.reconcileBackgroundSchedule();
+  } catch (_) {
+    // Subscription storage/scheduler failures must not prevent app startup.
+    // The subscriptions page exposes its persisted/error status for retry.
+  }
+}
+
 /// 初始化 Flutter 绑定、系统栏样式，并启动Focubili-UIX应用。
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -134,30 +161,7 @@ Future<void> main(List<String> args) async {
       );
     }
   }
-  try {
-    await CacheLifecycle.initialize();
-  } catch (_) {}
-  unawaited(ImageResourceCache.cleanLegacyCache());
-  unawaited(
-    ImageResourceCache.instance.status().catchError(
-      (Object _) => const ImageCacheUsage(0, 0, 0),
-    ),
-  );
-  if (PlatformServices.current.capabilities.mediaCacheBackend ==
-      MediaCacheBackendKind.windowsMediaKit) {
-    try {
-      await WindowsMediaCacheService().maintain();
-    } catch (_) {}
-  }
   await _prepareWindowsDesktop();
-  // Reconcile persisted opt-in after an upgrade/restart; disabled by default.
-  try {
-    await SubscriptionService.instance.initialize();
-    await SubscriptionService.instance.reconcileBackgroundSchedule();
-  } catch (_) {
-    // Subscription storage/scheduler failures must not prevent app startup.
-    // The subscriptions page exposes its persisted/error status for retry.
-  }
   // Android 启动方向由 MainActivity 在 Flutter 首帧前决定，避免未稳定的窗口尺寸把平板误判成手机。
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   // 首帧前先按浅色背景设置深色系统图标，后续由应用主题自动同步明暗模式。
@@ -168,7 +172,12 @@ Future<void> main(List<String> args) async {
     LiquidGlassWidgets.wrap(
       // MaterialApp 下必须桥接应用主题的明暗，否则玻璃边框和阴影在系统深色模式下会错位。
       brightnessResolver: Theme.maybeBrightnessOf,
-      child: const FocuBiliApp(checkForUpdatesOnStart: true),
+      child: const FocuBiliApp(
+        checkForUpdatesOnStart: true,
+        // 真实启动展示启动页；缓存与订阅预热与 420ms 动画并行进行。
+        showSplash: true,
+        startupTasks: _warmUpStartup,
+      ),
     ),
   );
 }
