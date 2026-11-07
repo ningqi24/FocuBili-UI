@@ -5,19 +5,13 @@ import 'package:flutter/material.dart';
 import '../../core/router/app_router.dart';
 import '../../core/widgets/home_theme_background.dart';
 import '../../models/focus_session.dart';
-import '../../models/learning_list_entry.dart';
 import '../../services/bilibili_auth_service.dart';
-import '../../services/bilibili_service.dart';
 import '../../services/dashboard_layout_service.dart';
-import '../../services/learning_list_service.dart';
-import '../common/app_network_image.dart';
 import '../focus/focus_dashboard.dart';
 import '../focus/focus_timer_scope.dart';
 import '../focus/focus_video_launcher.dart';
-import '../learning/learning_list_page.dart';
-import '../learning/learning_video_launcher.dart';
 
-/// 专注导向的首页，把目标计时作为主动观看前的第一入口。
+/// 专注导向的首页，只保留品牌、问候和两个主入口。
 class HomePage extends StatefulWidget {
   /// 创建首页，并接收搜索、个人中心入口和可替换的本机服务。
   const HomePage({
@@ -26,9 +20,6 @@ class HomePage extends StatefulWidget {
     this.onProfileRequested,
     this.onFocusRequested,
     this.onOpenSubscriptions,
-    this.onOpenLearningList,
-    this.learningListService,
-    this.videoService,
     this.authService,
     this.layoutService,
     this.refreshGeneration = 0,
@@ -43,79 +34,47 @@ class HomePage extends StatefulWidget {
   /// 切入“关注”一级页的回调；为空时焦点订阅入口退回自己的路由跳转。
   final VoidCallback? onOpenSubscriptions;
 
-  /// 切入“清单”一级页的回调；为空时继续使用独立路由页面。
-  final VoidCallback? onOpenLearningList;
-
-  final LearningListService? learningListService;
-  final BilibiliService? videoService;
   final BilibiliAuthService? authService;
   final int refreshGeneration;
 
-  /// 首页卡片布局存储，与学习清单和计时业务分开维护。
+  /// 首页订阅引导使用的布局存储。
   final DashboardLayoutService? layoutService;
 
-  /// 创建首页状态，用于读取并刷新唯一突出显示的继续学习任务。
+  /// 创建首页状态，用于读取账号头像。
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-/// 管理首页的继续学习任务读取、打开清单和恢复播放操作。
+/// 管理首页账号头像读取和一级页面跳转。
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
-  late final LearningListService _learningListService;
-  late final BilibiliService _videoService;
   late final BilibiliAuthService _authService;
-  LearningListEntry? _continueLearningEntry;
   BilibiliSessionState _homeSession = const BilibiliSessionState.signedOut();
-  bool _learningListLoading = true;
-  int _reloadGeneration = 0;
   int _accountReloadGeneration = 0;
 
-  /// 初始化学习清单服务，并异步读取当前唯一需要突出的学习任务。
+  /// 初始化账号服务，并在首帧后读取已登录头像。
   @override
   void initState() {
     super.initState();
-    _learningListService = widget.learningListService ?? LearningListService();
-    _videoService = widget.videoService ?? BilibiliVideoInfoService();
     _authService = widget.authService ?? BilibiliAuthService();
     WidgetsBinding.instance.addObserver(this);
-    unawaited(_reloadContinueLearning());
     unawaited(_reloadHomeSession());
   }
 
-  /// 主框架每次重新选择首页都会递增刷新代次，首页据此重新读取刚加入的学习任务。
+  /// 主框架每次重新选择首页都会递增刷新代次，首页据此重新读取账号头像。
   @override
   void didUpdateWidget(covariant HomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.refreshGeneration != widget.refreshGeneration) {
-      unawaited(_reloadContinueLearning());
       unawaited(_reloadHomeSession());
     }
   }
 
-  /// 应用从后台回到前台时重新读取清单，覆盖其他页面或上次进程状态产生的变化。
+  /// 应用从后台回到前台时重新读取账号状态。
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      unawaited(_reloadContinueLearning());
       unawaited(_reloadHomeSession());
     }
-  }
-
-  /// 从本机清单选择当前第一条未完成任务，并忽略晚于新请求返回的旧异步结果。
-  Future<void> _reloadContinueLearning() async {
-    final int generation = ++_reloadGeneration;
-    if (mounted) {
-      setState(() => _learningListLoading = true);
-    }
-    final LearningListEntry? entry = await _learningListService
-        .loadCurrentTask();
-    if (!mounted || generation != _reloadGeneration) {
-      return;
-    }
-    setState(() {
-      _continueLearningEntry = entry;
-      _learningListLoading = false;
-    });
   }
 
   /// 读取首页右上角需要的已登录头像；网络错误时保留主题色默认图标。
@@ -154,258 +113,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     FocusVideoLauncher.open(context, session);
   }
 
-  /// 打开完整学习清单；主框架会直接切换到“清单”一级页面。
-  Future<void> _openLearningList() async {
-    final VoidCallback? onOpenLearningList = widget.onOpenLearningList;
-    if (onOpenLearningList != null) {
-      onOpenLearningList();
-      return;
-    }
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        // 清单页面构建函数复用首页同一服务，保证测试和返回刷新使用同一数据源。
-        builder: (BuildContext context) => LearningListPage(
-          learningListService: _learningListService,
-          videoService: _videoService,
-        ),
-      ),
-    );
-    if (mounted) {
-      await _reloadContinueLearning();
-    }
-  }
-
-  /// 恢复首页突出任务的分P和时间点，返回后刷新当前任务的最新状态。
-  Future<void> _continueLearning(LearningListEntry entry) async {
-    await LearningVideoLauncher.open(
-      context,
-      entry,
-      service: _videoService,
-      learningListService: _learningListService,
-    );
-    if (mounted) {
-      await _reloadContinueLearning();
-    }
-  }
-
-  /// 把秒数格式化为紧凑时间，供首页继续学习任务显示已学进度。
-  String _formatPosition(Duration value) {
-    final int seconds = value.inSeconds.clamp(0, 24 * 60 * 60);
-    final int hours = seconds ~/ 3600;
-    final int minutes = (seconds % 3600) ~/ 60;
-    final int rest = seconds % 60;
-    return hours > 0
-        ? '$hours:${minutes.toString().padLeft(2, '0')}:${rest.toString().padLeft(2, '0')}'
-        : '$minutes:${rest.toString().padLeft(2, '0')}';
-  }
-
-  /// 创建只突出一条当前学习任务的首页卡片，并保留完整清单入口。
-  Widget _buildContinueLearningCard(BuildContext context) {
-    if (_learningListLoading) {
-      return const Card(
-        key: Key('continue-learning-loading'),
-        child: Padding(
-          padding: EdgeInsets.all(18),
-          child: Row(
-            children: <Widget>[
-              SizedBox.square(
-                dimension: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              SizedBox(width: 12),
-              Expanded(child: Text('正在读取继续学习任务…')),
-            ],
-          ),
-        ),
-      );
-    }
-    final LearningListEntry? entry = _continueLearningEntry;
-    if (entry == null) {
-      return Card(
-        key: const Key('continue-learning-empty'),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: <Widget>[
-              const Icon(Icons.menu_book_outlined),
-              const SizedBox(width: 10),
-              const Expanded(child: Text('继续学习\n还没有未完成的学习任务。')),
-              TextButton(
-                // 查看清单函数打开统一管理页面，方便用户确认已完成任务。
-                onPressed: () => unawaited(_openLearningList()),
-                child: const Text('学习清单'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    final double progress = entry.duration > Duration.zero
-        ? (entry.position.inMilliseconds / entry.duration.inMilliseconds)
-              .clamp(0, 1)
-              .toDouble()
-        : 0;
-    return Card(
-      key: const Key('continue-learning-card'),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Icon(
-                  Icons.play_circle_fill_rounded,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '继续学习',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  key: const Key('home-open-learning-list'),
-                  // 完整清单函数不在首页堆叠多条任务，只在需要时打开管理页。
-                  onPressed: () => unawaited(_openLearningList()),
-                  child: const Text('查看清单'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // 封面缩略图 + 时长徽标 + 两行标题与学习进度摘要，续学进度一眼可见。
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _buildContinueCover(context, entry),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        entry.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '已学 ${(progress * 100).round()}% · 上次 ${_relativeTime(entry.updatedAt)}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'P${entry.partPageNumber} ${entry.partTitle} · ${entry.status.label}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 7,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '${_formatPosition(entry.position)} / ${_formatPosition(entry.duration)}',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            FilledButton.icon(
-              key: const Key('home-continue-learning'),
-              // 继续按钮函数查询视频最新详情，再交给播放器恢复任务位置。
-              onPressed: () => unawaited(_continueLearning(entry)),
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('继续学习'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 续播卡封面：16:9 缩略图，右下角叠加总时长徽标。
-  Widget _buildContinueCover(BuildContext context, LearningListEntry entry) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: SizedBox(
-        width: 116,
-        height: 66,
-        child: Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            ColoredBox(
-              color: Theme.of(context).brightness == Brightness.light
-                  ? const Color(0xFFF1F0EC)
-                  : const Color(0xFF232329),
-              child: entry.thumbnailUrl.isEmpty
-                  ? Icon(
-                      Icons.play_arrow_rounded,
-                      color: colors.onSurfaceVariant,
-                    )
-                  : AppNetworkImage(
-                      imageUrl: entry.thumbnailUrl,
-                      fit: BoxFit.cover,
-                      memCacheWidth: 232,
-                    ),
-            ),
-            Positioned(
-              right: 4,
-              bottom: 4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.62),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  _formatPosition(entry.duration),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 把任务最近更新时间转成「刚刚 / N 分钟前 / N 小时前」的相对描述。
-  String _relativeTime(DateTime value) {
-    final Duration diff = DateTime.now().difference(value);
-    if (diff.inMinutes < 1) return '刚刚';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} 分钟前';
-    if (diff.inHours < 24) return '${diff.inHours} 小时前';
-    if (diff.inDays < 30) return '${diff.inDays} 天前';
-    return '更早';
-  }
-
   /// 为首页添加随主题变化的背景，并复用应用级计时控制器保持专注状态。
   @override
   Widget build(BuildContext context) {
@@ -421,8 +128,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         onOpenStatistics: () => _openFocusStatistics(context),
         onOpenLinkedVideo: (FocusSession session) =>
             _openLinkedVideo(context, session),
-        continueLearningCard: _buildContinueLearningCard(context),
-        onOpenLearningList: () => unawaited(_openLearningList()),
         onOpenFocus: widget.onFocusRequested,
         onOpenSubscriptions: widget.onOpenSubscriptions,
       ),

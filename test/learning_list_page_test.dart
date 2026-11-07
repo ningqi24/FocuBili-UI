@@ -157,178 +157,8 @@ void main() {
     expect(completedPartBounds.top, greaterThan(firstPartBounds.bottom));
   });
 
-  testWidgets('首页继续学习只突出当前的一条学习任务', (WidgetTester tester) async {
-    final LearningListService service = await _learningListService();
-    await service.addVideo(_learningVideo());
-    final FocusTimerController focusController = FocusTimerController(
-      tickInterval: const Duration(days: 1),
-    );
-    addTearDown(focusController.dispose);
-    await focusController.initialize();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FocusTimerScope(
-          controller: focusController,
-          child: HomePage(
-            onSearchRequested: () {},
-            learningListService: service,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('continue-learning-card')), findsOneWidget);
-    expect(find.text('首页继续学习测试'), findsOneWidget);
-    expect(find.byKey(const Key('home-continue-learning')), findsOneWidget);
-  });
-
-  /// 验证主框架发出新的首页刷新代次后，会读取其他页面刚加入的学习任务。
-  testWidgets('切回首页会刷新刚加入的学习任务', (WidgetTester tester) async {
-    final LearningListService service = await _learningListService();
-    final FocusTimerController focusController = FocusTimerController(
-      tickInterval: const Duration(days: 1),
-    );
-    addTearDown(focusController.dispose);
-    await focusController.initialize();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FocusTimerScope(
-          controller: focusController,
-          child: HomePage(
-            onSearchRequested: () {},
-            learningListService: service,
-            refreshGeneration: 0,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('continue-learning-empty')), findsOneWidget);
-
-    await service.addVideo(_learningVideo());
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FocusTimerScope(
-          controller: focusController,
-          child: HomePage(
-            onSearchRequested: () {},
-            learningListService: service,
-            refreshGeneration: 1,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('continue-learning-card')), findsOneWidget);
-    expect(find.text('首页继续学习测试'), findsOneWidget);
-  });
-
-  /// 验证首页一次上滑后停在自然滚动位置，不再吸附到卡片区。
-  testWidgets('首页首屏上滑保持自然滚动位置', (WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(420, 640));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final LearningListService service = await _learningListService();
-    final FocusTimerController focusController = FocusTimerController(
-      tickInterval: const Duration(days: 1),
-    );
-    addTearDown(focusController.dispose);
-    await focusController.initialize();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FocusTimerScope(
-          controller: focusController,
-          child: HomePage(
-            onSearchRequested: () {},
-            onProfileRequested: () {},
-            learningListService: service,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final Finder scrollView = find.byType(CustomScrollView);
-    final ScrollController scroll = tester
-        .widget<CustomScrollView>(scrollView)
-        .controller!;
-    await tester.drag(scrollView, const Offset(0, -260));
-    await tester.pumpAndSettle();
-
-    final double upOffset = scroll.offset;
-    expect(upOffset, greaterThan(0));
-    final double heroHeight = tester
-        .getSize(find.byKey(const Key('focus-home-hero')))
-        .height;
-    final Rect cardRect = tester.getRect(
-      find.byKey(const Key('continue-learning-empty')),
-    );
-    // 卡片顶边严格等于首屏自然让出的位置，没有任何吸附位移。
-    expect(cardRect.top, closeTo(heroHeight + 12 - upOffset, 2));
-
-    // 轻微下滑只保留自然位移，不应触发额外跳转。
-    await tester.drag(scrollView, const Offset(0, 40));
-    await tester.pumpAndSettle();
-    expect(scroll.offset, lessThan(upOffset));
-    final Rect slightDownRect = tester.getRect(
-      find.byKey(const Key('continue-learning-empty')),
-    );
-    expect(slightDownRect.top, greaterThan(cardRect.top));
-
-    // 反向手势同样按自然距离回退，不会播放回到首屏的吸附动画。
-    await tester.drag(scrollView, const Offset(0, 180));
-    await tester.pumpAndSettle();
-    final Rect returnedCardRect = tester.getRect(
-      find.byKey(const Key('continue-learning-empty')),
-    );
-    expect(returnedCardRect.top, greaterThan(slightDownRect.top));
-  });
-
-  /// 验证大幅上滑可以滚动到首页底部，且松手后不回弹。
-  testWidgets('首页大幅上滑滚动到底部且不回弹', (WidgetTester tester) async {
-    // 短屏保留足够的深层滚动距离，同时让真实视口和 MediaQuery 尺寸一致。
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(420, 640);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    addTearDown(tester.view.resetPhysicalSize);
-    final LearningListService service = await _learningListService();
-    final FocusTimerController focusController = FocusTimerController(
-      tickInterval: const Duration(days: 1),
-    );
-    addTearDown(focusController.dispose);
-    await focusController.initialize();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FocusTimerScope(
-          controller: focusController,
-          child: HomePage(
-            onSearchRequested: () {},
-            onProfileRequested: () {},
-            learningListService: service,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final Finder scrollView = find.byType(CustomScrollView);
-    final ScrollController scroll = tester
-        .widget<CustomScrollView>(scrollView)
-        .controller!;
-    await tester.drag(scrollView, const Offset(0, -1300));
-    await tester.pumpAndSettle();
-
-    final double maxOffset = scroll.position.maxScrollExtent;
-    expect(scroll.offset, closeTo(maxOffset, 2));
-    // 稳定后仍停在底部，取消吸附不会把页面拉回卡片区起点。
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(scroll.offset, closeTo(maxOffset, 2));
-  });
-
   /// 验证浅色和深色首页动作按钮都使用应用主题主色，右上角只绘制图标。
   testWidgets('首页动作按钮跟随主题色', (WidgetTester tester) async {
-    final LearningListService service = await _learningListService();
     final FocusTimerController focusController = FocusTimerController(
       tickInterval: const Duration(days: 1),
     );
@@ -347,7 +177,6 @@ void main() {
             child: HomePage(
               onSearchRequested: () {},
               onProfileRequested: () {},
-              learningListService: service,
             ),
           ),
         ),
@@ -400,7 +229,6 @@ void main() {
 
   /// 验证有效账号的头像地址会替换首页右上角的默认人物图标。
   testWidgets('已登录用户首页显示头像', (WidgetTester tester) async {
-    final LearningListService service = await _learningListService();
     final FocusTimerController focusController = FocusTimerController(
       tickInterval: const Duration(days: 1),
     );
@@ -423,7 +251,6 @@ void main() {
           child: HomePage(
             onSearchRequested: () {},
             onProfileRequested: () {},
-            learningListService: service,
             authService: authService,
           ),
         ),

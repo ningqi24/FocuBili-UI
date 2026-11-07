@@ -199,7 +199,6 @@ class _MainShellState extends State<MainShell>
         onProfileRequested: _openProfile,
         onFocusRequested: _openFocus,
         onOpenSubscriptions: _openSubscriptions,
-        onOpenLearningList: _openLearningList,
         refreshGeneration: _homeRefreshGeneration,
       ),
       SearchPage(onBackRequested: workspace ? null : _openHome),

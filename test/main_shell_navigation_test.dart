@@ -160,21 +160,18 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  /// 验证首页不再展示专注计时卡片，下拉手势直接进入专注页。
-  testWidgets('首页去除专注卡片并下拉进入专注页', (WidgetTester tester) async {
+  /// 验证首页只保留静态内容，不再有下拉展开或专注计时卡片。
+  testWidgets('首页保持静态且不含专注卡片', (WidgetTester tester) async {
     await _pumpMainShell(tester);
 
     expect(find.byKey(const Key('focus-home-hero')), findsOneWidget);
+    expect(find.byType(CustomScrollView), findsNothing);
     expect(find.byKey(const Key('focus-ready-card')), findsNothing);
     expect(find.byKey(const Key('focus-today-summary')), findsNothing);
     expect(find.byKey(const Key('focus-recent-history')), findsNothing);
-
-    final Finder scrollView = find.byType(CustomScrollView).first;
-    // 首页已经在顶部，继续向下拖动累计到阈值后切换到专注一级页面。
-    await tester.drag(scrollView, const Offset(0, 220));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('focus-primary-page')), findsOneWidget);
-    expect(find.byKey(const Key('bottom-bar-focus')), findsOneWidget);
+    expect(find.byKey(const Key('home-start-focus')), findsOneWidget);
+    expect(find.byKey(const Key('home-start-search')), findsOneWidget);
+    expect(find.textContaining('下拉进入专注'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -184,7 +181,7 @@ void main() {
 
     final Finder rail = find.byKey(const Key('workspace-navigation-rail'));
     expect(rail, findsOneWidget);
-    expect(find.byKey(const Key('focus-workspace-layout')), findsOneWidget);
+    expect(find.byKey(const Key('focus-home-hero')), findsOneWidget);
     expect(find.byKey(const Key('home-start-focus')), findsOneWidget);
     expect(find.byKey(const Key('focus-ready-card')), findsNothing);
 

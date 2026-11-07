@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:focubili/core/widgets/editable_card_board.dart';
 import 'package:focubili/features/focus/focus_dashboard.dart';
 import 'package:focubili/features/focus/focus_timer_controller.dart';
 import 'package:focubili/services/subscription_service.dart';
@@ -10,7 +9,7 @@ import 'package:focubili/services/subscription_service.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  Future<ScrollController> mountHome(
+  Future<void> mountHome(
     WidgetTester tester, {
     Size size = const Size(430, 900),
     double textScale = 1,
@@ -47,80 +46,51 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    return tester
-        .widget<CustomScrollView>(find.byType(CustomScrollView).first)
-        .controller!;
   }
 
-  /// 首页取消吸附后拖动停在自然位置，松手不再自动跳到卡片区。
-  Future<void> dragAndExpectNaturalScroll(
-    WidgetTester tester,
-    ScrollController scroll,
-  ) async {
-    scroll.jumpTo(0);
-    await tester.pumpAndSettle();
-    final gesture = await tester.startGesture(const Offset(8, 400));
-    await gesture.moveBy(const Offset(0, -160));
-    await tester.pump(const Duration(milliseconds: 500));
-    final double draggedOffset = scroll.offset;
-    expect(draggedOffset, greaterThan(0));
-    await gesture.up();
-    await tester.pumpAndSettle();
-    expect(scroll.offset, closeTo(draggedOffset, 2));
-  }
+  testWidgets('订阅入口位于日期下方且不再显示标题文字', (tester) async {
+    await mountHome(tester);
 
-  for (final editing in [false, true]) {
-    testWidgets('1.8 接受首次订阅提示后恢复自然滚动，原编辑状态 $editing', (tester) async {
-      final scroll = await mountHome(tester);
-      final originalKey = tester
-          .widget<EditableCardBoard>(find.byType(EditableCardBoard))
-          .key;
-      if (editing) {
-        await tester.ensureVisible(find.text('自定义').last);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('自定义').last);
-        await tester.pumpAndSettle();
-        expect(find.text('完成'), findsOneWidget);
-        scroll.jumpTo(0);
-        await tester.pumpAndSettle();
-      }
-      await tester.tap(find.byKey(const Key('new-focus-subscription')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('好，开启焦点订阅'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('好的'));
-      await tester.pumpAndSettle();
-      await tester.pageBack();
-      await tester.pumpAndSettle();
+    // 首页只有静态内容，不再提供可滚动卡片区。
+    expect(find.byType(CustomScrollView), findsNothing);
+    expect(find.text('焦点订阅'), findsNothing);
+    expect(find.textContaining('下拉进入专注'), findsNothing);
 
-      expect(
-        tester.widget<EditableCardBoard>(find.byType(EditableCardBoard)).key,
-        isNot(originalKey),
-      );
-      expect(find.text('自定义').last, findsOneWidget);
-      expect(find.byKey(const Key('new-focus-subscription')), findsNothing);
-      await dragAndExpectNaturalScroll(tester, scroll);
-      expect(tester.takeException(), isNull);
-    });
-  }
-
-  testWidgets('1.8 窄屏大字拒绝提示恢复高度，首页保持自然滚动', (tester) async {
-    final scroll = await mountHome(
-      tester,
-      size: const Size(360, 720),
-      textScale: 2.5,
+    final Rect dateRect = tester.getRect(find.textContaining('月'));
+    final Rect buttonRect = tester.getRect(
+      find.byKey(const Key('new-focus-subscription')),
     );
-    final hero = find.byKey(const Key('focus-home-hero'));
-    final visibleHeight = tester.getSize(hero).height;
-    await tester.ensureVisible(find.byKey(const Key('new-focus-subscription')));
+    expect(buttonRect.top, greaterThan(dateRect.bottom));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('接受首次订阅提示后入口消失且排版正常', (tester) async {
+    await mountHome(tester);
+
+    await tester.tap(find.byKey(const Key('new-focus-subscription')));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('好，开启焦点订阅'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('好的'));
+    await tester.pumpAndSettle();
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('new-focus-subscription')), findsNothing);
+    expect(find.byKey(const Key('home-start-focus')), findsOneWidget);
+    expect(find.byKey(const Key('home-start-search')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('窄屏大字拒绝提示后首页仍不溢出', (tester) async {
+    await mountHome(tester, size: const Size(360, 720), textScale: 2.5);
+
     await tester.tap(find.byKey(const Key('new-focus-subscription')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('我不需要焦点订阅'));
     await tester.pumpAndSettle();
-    expect(tester.getSize(hero).height, lessThan(visibleHeight));
+
     expect(find.byKey(const Key('new-focus-subscription')), findsNothing);
-    await dragAndExpectNaturalScroll(tester, scroll);
     expect(tester.takeException(), isNull);
   });
 }

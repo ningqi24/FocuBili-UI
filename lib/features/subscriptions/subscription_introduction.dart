@@ -140,26 +140,24 @@ class _SubscriptionIntroductionState extends State<SubscriptionIntroduction>
   Widget build(BuildContext context) {
     if (!_visible) return const SizedBox.shrink();
     final colors = Theme.of(context).colorScheme;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text('焦点订阅'),
-        AnimatedBuilder(
-          animation: _breath,
-          builder: (context, child) => FilledButton.tonal(
-            key: const Key('new-focus-subscription'),
-            onPressed: _busy ? null : _open,
-            style: FilledButton.styleFrom(
-              backgroundColor: Color.lerp(
-                colors.primaryContainer,
-                colors.secondaryContainer,
-                Curves.easeInOut.transform(_breath.value),
-              ),
+    return Padding(
+      // 引导按钮与上方日期保持固定的阅读间距。
+      padding: const EdgeInsets.only(top: 14),
+      child: AnimatedBuilder(
+        animation: _breath,
+        builder: (context, child) => FilledButton.tonal(
+          key: const Key('new-focus-subscription'),
+          onPressed: _busy ? null : _open,
+          style: FilledButton.styleFrom(
+            backgroundColor: Color.lerp(
+              colors.primaryContainer,
+              colors.secondaryContainer,
+              Curves.easeInOut.transform(_breath.value),
             ),
-            child: const Text('新增焦点订阅'),
           ),
+          child: const Text('新增焦点订阅'),
         ),
-      ],
+      ),
     );
   }
 

@@ -148,8 +148,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  /// 矮横屏首页左栏保留简介和一级页入口，右栏是首页可编辑卡片。
-  testWidgets('矮横屏首页使用简介与卡片双栏', (WidgetTester tester) async {
+  /// 矮横屏首页同样只使用单列静态布局，不再出现卡片工作台。
+  testWidgets('矮横屏首页保持静态单列', (WidgetTester tester) async {
     _configureTestWindow(tester, const Size(1024, 600));
     final FocusTimerController controller = FocusTimerController(
       tickInterval: const Duration(days: 1),
@@ -173,27 +173,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('focus-workspace-layout')), findsOneWidget);
-    expect(find.byKey(const Key('focus-workspace-primary')), findsOneWidget);
-    expect(find.byKey(const Key('focus-workspace-secondary')), findsOneWidget);
-    expect(find.byKey(const Key('focus-home-hero')), findsNothing);
+    expect(find.byKey(const Key('focus-home-hero')), findsOneWidget);
+    expect(find.byType(CustomScrollView), findsNothing);
+    expect(find.byKey(const Key('focus-workspace-layout')), findsNothing);
     // 首页不再内嵌专注计时卡片，专注入口只负责切换到一级页面。
     expect(find.byKey(const Key('focus-ready-card')), findsNothing);
     expect(find.byKey(const Key('home-start-focus')), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('focus-workspace-secondary')),
-        matching: find.byKey(
-          const ValueKey('dashboard-card-home.quick_actions'),
-        ),
-      ),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('home-start-search')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  /// 低于平板断点的矮屏也缩短欢迎区，避免首屏高度超过实际视口。
-  testWidgets('矮手机首页缩短首屏且没有布局异常', (WidgetTester tester) async {
+  /// 低于平板断点的矮屏也保持静态首屏，并完整容纳两个主操作。
+  testWidgets('矮手机首页没有布局异常', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({
       SubscriptionOnboardingService.choiceKey: 'declined',
     });
@@ -222,17 +213,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      tester.getSize(find.byKey(const Key('focus-home-hero'))).height,
-      // The new introduction reserves measured text space. It must still fit
-      // this short viewport instead of relying on the old fixed hero height.
-      inInclusiveRange(336, 400),
-    );
+    expect(find.byKey(const Key('home-start-focus')), findsOneWidget);
+    expect(find.byKey(const Key('home-start-search')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  /// 新功能提示完成选择后不再给矮屏留下额外空白，也不影响搜索入口。
-  testWidgets('矮屏拒绝订阅提示后恢复原首页高度', (tester) async {
+  /// 新功能提示完成选择后不再给矮屏留下额外空白，也不影响主操作。
+  testWidgets('矮屏拒绝订阅提示后入口消失', (tester) async {
     _configureTestWindow(tester, const Size(599, 400));
     final controller = FocusTimerController(
       tickInterval: const Duration(days: 1),
@@ -257,10 +244,6 @@ void main() {
     await tester.tap(find.text('我不需要焦点订阅'));
     await tester.pumpAndSettle();
     expect(find.text('新增焦点订阅'), findsNothing);
-    expect(
-      tester.getSize(find.byKey(const Key('focus-home-hero'))).height,
-      336,
-    );
     expect(find.text('开始搜索'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

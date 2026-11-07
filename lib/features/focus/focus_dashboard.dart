@@ -1,21 +1,17 @@
 import 'package:focubili/features/common/app_network_image.dart';
 import '../../services/subscription_service.dart';
 import '../subscriptions/subscription_updates_page.dart';
-import '../subscriptions/subscription_home_card.dart';
 import '../subscriptions/subscription_introduction.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart'
-    show RenderBox, RenderObject, SliverConstraints;
+import 'package:flutter/rendering.dart' show SliverConstraints;
 
 import '../../core/layout/adaptive_layout.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/editable_card_board.dart';
 import '../../services/dashboard_layout_service.dart';
 import '../../models/focus_session.dart';
 import 'custom_focus_duration_dialog.dart';
@@ -24,7 +20,6 @@ import 'focus_interruption_dialog.dart';
 import 'focus_timer_controller.dart';
 
 part 'focus_dashboard_home_layout.dart';
-part 'focus_dashboard_home_cards.dart';
 
 /// 专注台：传入个人入口时作为首页，否则是独立专注一级页面。
 class FocusDashboard extends StatefulWidget {
@@ -83,25 +78,17 @@ class FocusDashboard extends StatefulWidget {
 class _FocusDashboardState extends State<FocusDashboard> {
   static const List<int> _presetMinutes = <int>[25, 45, 60];
 
-  /// 首页顶部下拉累计该距离后直接切换到独立专注页。
-  static const double _focusPullTriggerDistance = 120;
-
-  /// 每日专注目标（分钟），首页「今日专注目标」仪表盘的进度基准。
+  /// 每日专注目标（分钟），专注页「今日专注目标」仪表盘的进度基准。
   static const int _dailyGoalMinutes = 150;
 
   final TextEditingController _goalController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  GlobalKey _homeBoardKey = GlobalKey(debugLabel: 'home-card-board');
 
-  /// 专注任务卡片的定位键，供首屏「开始专注」一步滚动直达。
+  /// 专注任务卡片的定位键，供目标卡按钮一步滚动直达。
   final GlobalKey _focusSessionCardKey = GlobalKey(
     debugLabel: 'focus-session-card',
   );
 
-  /// 订阅引导组件的实测键，首屏高度按其真实高度预留。
-  final GlobalKey _subscriptionIntroKey = GlobalKey(
-    debugLabel: 'subscription-intro',
-  );
   late final DashboardLayoutService _homeLayouts =
       widget.layoutService ?? DashboardLayoutService();
   late final SubscriptionService _subscriptions =
@@ -111,31 +98,13 @@ class _FocusDashboardState extends State<FocusDashboard> {
   }
 
   Widget _buildSubscriptionIntroduction() => SubscriptionIntroduction(
-    key: _subscriptionIntroKey,
     service: _subscriptions,
     layoutService: _homeLayouts,
-    onVisibilityChanged: (visible) {
-      if (mounted && _showSubscriptionIntroduction != visible) {
-        setState(() => _showSubscriptionIntroduction = visible);
-      }
-    },
     onEnabled: () {
-      if (mounted) {
-        // 引导会销毁旧卡片容器，先同步退出父页的编辑状态并清理旧手势。
-        _handleHomeEditingChanged(false);
-        setState(
-          () => _homeBoardKey = GlobalKey(debugLabel: 'home-card-board'),
-        );
-      }
+      if (mounted) setState(() {});
     },
   );
-  bool _showSubscriptionIntroduction = false;
-  bool _editingHomeCards = false;
   int _selectedMinutes = 25;
-  double _scrollOffset = 0;
-
-  /// 首页在顶部继续下拉时累计的距离，达到阈值后直接切换到专注页。
-  double _focusPullDistance = 0;
 
   Widget _buildSubscriptionButton() => ListenableBuilder(
     listenable: _subscriptions,
@@ -169,7 +138,6 @@ class _FocusDashboardState extends State<FocusDashboard> {
     _subscriptions.addListener(_subscriptionChanged);
     unawaited(_subscriptions.initialize());
     _goalController.addListener(_handleGoalChanged);
-    _scrollController.addListener(_handleScrollChanged);
   }
 
   /// 目标输入变化时刷新开始按钮，不修改控制器中的活动计时。
@@ -177,48 +145,6 @@ class _FocusDashboardState extends State<FocusDashboard> {
     if (mounted) {
       setState(() {});
     }
-  }
-
-  /// 记录首页滚动距离，用来驱动首屏内容的上移、模糊和透明度变化。
-  void _handleScrollChanged() {
-    if (!mounted) {
-      return;
-    }
-    setState(() => _scrollOffset = _scrollController.offset);
-  }
-
-  /// 记录首页主滚动的手势，在顶部继续下拉越过阈值时切换到独立专注页。
-  bool _handleHomeScrollNotification(ScrollNotification notification) {
-    if (_editingHomeCards || notification.depth != 0) {
-      return false;
-    }
-    if (notification is OverscrollNotification &&
-        notification.dragDetails != null &&
-        notification.overscroll < 0) {
-      // 首页顶部继续下拉直接进入专注页，用完即重置，避免一次手势重复切换。
-      _focusPullDistance -= notification.overscroll;
-      if (_focusPullDistance >= _focusPullTriggerDistance &&
-          widget.onOpenFocus != null) {
-        _focusPullDistance = 0;
-        widget.onOpenFocus!();
-      }
-    } else if (notification is ScrollStartNotification ||
-        notification is ScrollEndNotification) {
-      _focusPullDistance = 0;
-    }
-    return false;
-  }
-
-  /// 编辑时清空下拉累计，防止长按拖动被误判成切换专注页。
-  void _handleHomeEditingChanged(bool editing) {
-    if (!mounted || editing == _editingHomeCards) return;
-    if (editing && _scrollController.hasClients) {
-      _scrollController.jumpTo(_scrollController.offset);
-    }
-    setState(() {
-      _editingHomeCards = editing;
-      _focusPullDistance = 0;
-    });
   }
 
   /// 使用当前目标和所选分钟数开始专注，并在失败时给出可读提示。
@@ -792,53 +718,42 @@ class _FocusDashboardState extends State<FocusDashboard> {
         final FocusSession? activeSession = widget.controller.activeSession;
         final FocusSession? finishedSession =
             widget.controller.lastFinishedSession;
-        final bool useHomeHero = widget.onOpenProfile != null;
-        if (useHomeHero &&
-            AdaptiveLayout.usesWorkspace(MediaQuery.sizeOf(context))) {
-          return _buildWorkspaceDashboard(context);
+        // 首页只呈现品牌、问候、日期、订阅入口和两个主操作，内容不随滚动展开。
+        if (widget.onOpenProfile != null) {
+          return _buildHomeScreen(context);
         }
-        return NotificationListener<ScrollNotification>(
-          onNotification: _handleHomeScrollNotification,
-          child: CustomScrollView(
-            controller: _scrollController,
-            // 内容不足一屏时也接受下拉手势，保证首页始终可以下拉进入专注页。
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: <Widget>[
-              if (useHomeHero) _buildHomeHero(context),
-              if (useHomeHero)
-                _buildCardsSliver(context, activeSession, finishedSession)
-              else ...<Widget>[
-                SliverAppBar.large(
-                  title: Text(widget.appBarTitle),
-                  actions: <Widget>[
-                    _buildSubscriptionButton(),
-                    if (widget.onOpenLearningList != null)
-                      IconButton(
-                        key: const Key('open-learning-list'),
-                        // 学习清单按钮函数由首页打开完整任务管理页面。
-                        onPressed: widget.onOpenLearningList,
-                        icon: const Icon(Icons.menu_book_rounded),
-                        tooltip: '学习清单',
-                      ),
-                    IconButton(
-                      key: const Key('open-focus-statistics'),
-                      // 统计按钮函数打开本机专注看板与统一记录管理页。
-                      onPressed: widget.onOpenStatistics,
-                      icon: const Icon(Icons.insights_rounded),
-                      tooltip: '专注数据',
-                    ),
-                    IconButton(
-                      // 顶部打开视频函数直接切换到搜索页。
-                      onPressed: widget.onOpenVideo,
-                      icon: const Icon(Icons.search_rounded),
-                      tooltip: '打开视频',
-                    ),
-                  ],
+        return CustomScrollView(
+          controller: _scrollController,
+          slivers: <Widget>[
+            SliverAppBar.large(
+              title: Text(widget.appBarTitle),
+              actions: <Widget>[
+                _buildSubscriptionButton(),
+                if (widget.onOpenLearningList != null)
+                  IconButton(
+                    key: const Key('open-learning-list'),
+                    // 学习清单按钮函数由首页打开完整任务管理页面。
+                    onPressed: widget.onOpenLearningList,
+                    icon: const Icon(Icons.menu_book_rounded),
+                    tooltip: '学习清单',
+                  ),
+                IconButton(
+                  key: const Key('open-focus-statistics'),
+                  // 统计按钮函数打开本机专注看板与统一记录管理页。
+                  onPressed: widget.onOpenStatistics,
+                  icon: const Icon(Icons.insights_rounded),
+                  tooltip: '专注数据',
                 ),
-                _buildCardsSliver(context, activeSession, finishedSession),
+                IconButton(
+                  // 顶部打开视频函数直接切换到搜索页。
+                  onPressed: widget.onOpenVideo,
+                  icon: const Icon(Icons.search_rounded),
+                  tooltip: '打开视频',
+                ),
               ],
-            ],
-          ),
+            ),
+            _buildCardsSliver(context, activeSession, finishedSession),
+          ],
         );
       },
     );
@@ -851,9 +766,7 @@ class _FocusDashboardState extends State<FocusDashboard> {
     _goalController
       ..removeListener(_handleGoalChanged)
       ..dispose();
-    _scrollController
-      ..removeListener(_handleScrollChanged)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 }

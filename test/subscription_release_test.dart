@@ -714,10 +714,8 @@ void main() {
         (await layouts.load('home', const [])).order.first,
         SubscriptionOnboardingService.homeCardId,
       );
-      await tester.ensureVisible(
-        find.byKey(const Key('home-subscription-card')),
-      );
-      await tester.pumpAndSettle();
+      // 首页已改为静态布局，订阅卡片不再渲染，但快捷入口仍需保留。
+      expect(find.byKey(const Key('home-subscription-card')), findsNothing);
       await captureSubscriptionUi(tester, boundary, 'introduction-first-card');
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(host());
