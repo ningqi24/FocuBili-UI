@@ -27,6 +27,12 @@ for spec in mdpi:48:108 hdpi:72:162 xhdpi:96:216 xxhdpi:144:324 xxxhdpi:192:432;
   done
 done
 
+# Android 13+ themed icon needs a single-colour silhouette; a flattened bitmap
+# would tint into a solid square. Keep only the white wordmark as the shape.
+mkdir -p android/app/src/main/res/drawable-xxxhdpi
+convert "$MASTER" -alpha off -colorspace gray -threshold 88% -transparent black \
+  -resize 432x432 android/app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.png
+
 # iOS AppIcon slots, including the dark-appearance entry (same light artwork).
 ios=ios/Runner/Assets.xcassets/AppIcon.appiconset
 for spec in \
