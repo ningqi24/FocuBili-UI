@@ -7,12 +7,11 @@ cd "$(dirname "$0")/.."
 
 MASTER=assets/icon/focubili_icon.png
 # Flattened full-bleed square for slots that must be opaque or fill an adaptive mask.
-# 130% zoom crops the rounded corners away so no dark background can leak through.
+# 圆角外的透明区域用品牌粉填充；图案本身已按自适应图标安全区留白，不做额外裁切。
 flat_square() {
   local size=$1 out=$2
-  convert "$MASTER" -background '#DCE7F7' -alpha remove -alpha off \
-    -resize "$((size * 13 / 10))x$((size * 13 / 10))" \
-    -gravity center -extent "${size}x${size}" "$out"
+  convert "$MASTER" -background '#FB7299' -alpha remove -alpha off \
+    -resize "${size}x${size}" "$out"
 }
 
 # Android legacy icons and adaptive foregrounds (day and night share the light art).
