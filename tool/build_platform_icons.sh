@@ -10,7 +10,7 @@ MASTER=assets/icon/focubili_icon.png
 # 圆角外的透明区域用品牌粉填充；图案本身已按自适应图标安全区留白，不做额外裁切。
 flat_square() {
   local size=$1 out=$2
-  convert "$MASTER" -background '#FB7299' -alpha remove -alpha off \
+  convert "$MASTER" -background '#F96EA6' -alpha remove -alpha off \
     -resize "${size}x${size}" "$out"
 }
 
