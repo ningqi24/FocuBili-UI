@@ -3,5 +3,4 @@
     <color name="icon_bg">#E3EEFC</color>
     <!-- 启动图为白底构图，原生启动底色与其留白一致，避免进入前出现色差。 -->
     <color name="splash_background">#FFFFFF</color>
-    <color name="splash_mark">#2B57C4</color>
 </resources>

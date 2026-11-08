@@ -1,3 +1,4 @@
+import 'services/app_behavior_preferences_service.dart';
 import 'services/media_cache_service.dart';
 import 'services/cache_lifecycle.dart';
 import 'services/image_resource_cache.dart';
@@ -164,6 +165,10 @@ Future<void> _precacheAssetImage(String asset) {
 
 /// 启动动画期间并行加载资源、预热缓存与订阅；全部完成后才显示主界面。
 Future<void> _warmUpStartup() async {
+  // 提前读取底栏风格，主框架首帧直接渲染目标样式，避免先闪一下经典五格底栏。
+  try {
+    await AppBehaviorPreferencesService().loadLiquidGlassBottomBar();
+  } catch (_) {}
   await _preloadStartupResources();
   try {
     await CacheLifecycle.initialize();

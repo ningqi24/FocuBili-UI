@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ 系统启动页只支持白底加居中图标；用与背景同色的占位图标隐藏旧焦点标记，
+     全屏启动图随后由 Flutter 首帧直接接手，避免出现两种不同的启动画面。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/splash_background" />
+    <size
+        android:width="1dp"
+        android:height="1dp" />
+</shape>

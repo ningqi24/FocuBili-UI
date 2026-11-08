@@ -3,5 +3,4 @@
     <color name="icon_bg">#101827</color>
     <!-- 启动图为白底构图，深色模式同样保持白色启动底色，避免首帧闪黑。 -->
     <color name="splash_background">#FFFFFF</color>
-    <color name="splash_mark">#8CA6EE</color>
 </resources>

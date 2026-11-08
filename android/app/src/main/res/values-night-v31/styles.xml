@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 深色模式仍使用品牌启动图，避免 Android 12 回退到黑底默认机器人图标。 -->
+    <!-- 深色模式同样保持白色启动底，与 Flutter 启动图无缝衔接。 -->
     <style name="LaunchTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_mark</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_blank_icon</item>
         <item name="android:windowSplashScreenAnimationDuration">200</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>

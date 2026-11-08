@@ -34,8 +34,9 @@ class _MainShellState extends State<MainShell>
   int? _transitionTo;
   int _homeRefreshGeneration = 0;
 
-  /// 是否使用 iOS 26 液态玻璃底栏；关闭时保持经典 B站 五格底栏。
-  bool _liquidGlassBottomBar = false;
+  /// 是否使用 iOS 26 液态玻璃底栏；启动预热已读取偏好时直接沿用，避免首帧闪回经典五格底栏。
+  bool _liquidGlassBottomBar =
+      AppBehaviorPreferencesService.cachedLiquidGlassBottomBar ?? true;
 
   /// 页面栈顺序：首页、搜索、关注、专注、清单、我的；搜索从首页进入。
   static const int _searchPageIndex = 1;

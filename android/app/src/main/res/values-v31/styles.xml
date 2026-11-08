@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Android 12 及以上启动页必须显式指定应用图标，否则系统会显示默认机器人占位图标。 -->
+    <!-- 系统启动页只保留白底；图标使用同色占位，避免先闪出旧的焦点标记。 -->
     <style name="LaunchTheme" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar">
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_mark</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_blank_icon</item>
         <item name="android:windowSplashScreenAnimationDuration">200</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>

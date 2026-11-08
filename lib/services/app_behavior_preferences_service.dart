@@ -25,6 +25,13 @@ class AppBehaviorPreferencesService {
   /// 液态玻璃底栏开关的存储键，主框架和设置页共用同一键读取当前风格。
   static const String liquidGlassBottomBarKey =
       'app_behavior.liquid_glass_bottom_bar';
+
+  /// 启动预热阶段读到的底栏风格；主框架首帧据此直接渲染，避免先闪一下经典底栏。
+  static bool? _cachedLiquidGlassBottomBar;
+
+  /// 已预热的底栏风格；尚未读取（例如测试直接构建主框架）时为 null。
+  static bool? get cachedLiquidGlassBottomBar => _cachedLiquidGlassBottomBar;
+
   final AppBehaviorPreferencesLoader _preferencesLoader;
 
   /// 读取账号只读开关；没有旧配置或读取失败时默认开启以保护账号。
@@ -66,12 +73,23 @@ class AppBehaviorPreferencesService {
       _saveBool(_wbiSigningEnabledKey, enabled);
 
   /// 读取底栏风格开关；没有旧配置或读取失败时默认启用液态玻璃底栏。
-  Future<bool> loadLiquidGlassBottomBar() =>
-      _loadBool(liquidGlassBottomBarKey, defaultValue: true);
+  Future<bool> loadLiquidGlassBottomBar() async {
+    final bool enabled = await _loadBool(
+      liquidGlassBottomBarKey,
+      defaultValue: true,
+    );
+    _cachedLiquidGlassBottomBar = enabled;
+    return enabled;
+  }
 
   /// 保存底栏风格开关；写入成功后通知主框架立即切换底栏样式。
-  Future<bool> saveLiquidGlassBottomBar(bool enabled) =>
-      _saveBool(liquidGlassBottomBarKey, enabled);
+  Future<bool> saveLiquidGlassBottomBar(bool enabled) async {
+    final bool saved = await _saveBool(liquidGlassBottomBarKey, enabled);
+    if (saved) {
+      _cachedLiquidGlassBottomBar = enabled;
+    }
+    return saved;
+  }
 
   /// 从本机读取布尔偏好；存储不可用时使用调用方指定的安全默认值。
   Future<bool> _loadBool(String key, {required bool defaultValue}) async {
