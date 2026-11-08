@@ -159,7 +159,10 @@ class _MainShellState extends State<MainShell>
   }
 
   /// 玻璃底栏的五格索引：搜索页属于首页入口，保持首页高亮。
-  int get _bottomBarSelectedIndex => switch (_currentIndex) {
+  ///
+  /// 页面过渡期间立即使用目标页，否则玻璃指示器会在松手后先回到原格，
+  /// 等 360ms 过渡结束才追到松手位置。
+  int get _bottomBarSelectedIndex => switch (_transitionTo ?? _currentIndex) {
     0 || _searchPageIndex => 0,
     _subscriptionsPageIndex => 1,
     _focusPageIndex => 2,
@@ -568,10 +571,17 @@ class _MainShellState extends State<MainShell>
                 );
               }
               if (_liquidGlassBottomBar) {
-                // 玻璃底栏悬浮在页面之上，让列表内容从玻璃背后经过以产生折射。
+                // 玻璃底栏悬浮在页面之上；页面整体上移一个底栏高度，避免底部按钮被遮挡。
+                final double barInset =
+                    58 + 12 * 2 + MediaQuery.paddingOf(context).bottom;
                 return Stack(
                   children: <Widget>[
-                    Positioned.fill(child: pageStack),
+                    Positioned.fill(
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: barInset),
+                        child: pageStack,
+                      ),
+                    ),
                     Positioned(
                       left: 0,
                       right: 0,

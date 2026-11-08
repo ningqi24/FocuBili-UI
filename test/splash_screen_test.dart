@@ -17,21 +17,23 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
   }
 
-  testWidgets('启动页显示矢量标记与单行 Slogan', (WidgetTester tester) async {
+  testWidgets('启动页全屏铺满启动图', (WidgetTester tester) async {
     await pumpSplash(tester, Brightness.light);
 
-    expect(find.byKey(const Key('splash-logo')), findsOneWidget);
-    expect(find.byKey(const Key('splash-slogan')), findsOneWidget);
-    expect(find.text('安静地，专注一件事'), findsOneWidget);
+    final Finder image = find.byKey(const Key('splash-image'));
+    expect(image, findsOneWidget);
+    final Image widget = tester.widget<Image>(image);
+    expect(widget.fit, BoxFit.cover);
+    expect((widget.image as AssetImage).assetName, SplashScreen.imageAsset);
     // 启动页不提供广告位、加载指示或额外文案。
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('深色模式启动页同样可渲染且不留白闪', (WidgetTester tester) async {
+  testWidgets('深色模式启动页同样铺满启动图', (WidgetTester tester) async {
     await pumpSplash(tester, Brightness.dark);
 
-    expect(find.byKey(const Key('splash-logo')), findsOneWidget);
+    expect(find.byKey(const Key('splash-image')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -56,7 +58,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('启动门控至少展示动画时长后再进入主界面', (WidgetTester tester) async {
+  testWidgets('启动门控至少展示淡入时长后再进入主界面', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: SplashGate(
@@ -69,7 +71,7 @@ void main() {
     expect(find.byType(SplashScreen), findsOneWidget);
     expect(find.text('主界面'), findsNothing);
 
-    // 预热很快完成，但动画未结束前仍停留在启动页。
+    // 预热很快完成，但淡入未结束前仍停留在启动页。
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(SplashScreen), findsOneWidget);
 
@@ -79,22 +81,42 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('预热超时不会阻塞主界面', (WidgetTester tester) async {
-    final Completer<void> never = Completer<void>();
-    addTearDown(() {
-      if (!never.isCompleted) never.complete();
-    });
+  testWidgets('资源加载完成前保持启动页', (WidgetTester tester) async {
+    final Completer<void> pending = Completer<void>();
     await tester.pumpWidget(
       MaterialApp(
         home: SplashGate(
-          warmUp: () => never.future,
+          warmUp: () => pending.future,
           child: const Scaffold(body: Text('主界面')),
         ),
       ),
     );
 
-    await tester.pump(const Duration(milliseconds: 700));
+    // 淡入早已结束，但资源仍未就绪，主界面不得提前出现。
+    await tester.pump(const Duration(seconds: 2));
     await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(SplashScreen), findsOneWidget);
+    expect(find.text('主界面'), findsNothing);
+
+    pending.complete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('主界面'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('资源加载失败时不会永久停留在启动页', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SplashGate(
+          warmUp: () async => throw StateError('资源损坏'),
+          child: const Scaffold(body: Text('主界面')),
+        ),
+      ),
+    );
+
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('主界面'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

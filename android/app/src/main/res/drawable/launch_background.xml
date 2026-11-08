@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 11 及以下使用启动页底色和矢量焦点标记，减少首帧跳变。 -->
+<!-- Android 11 及以下全屏展示启动图，与 Flutter 启动页使用同一张图片。 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
-    <item
-        android:width="96dp"
-        android:height="96dp"
-        android:gravity="center"
-        android:drawable="@drawable/ic_splash_mark" />
+    <item>
+        <bitmap
+            android:src="@drawable/splash_background"
+            android:gravity="fill"
+            android:filter="true" />
+    </item>
 </layer-list>

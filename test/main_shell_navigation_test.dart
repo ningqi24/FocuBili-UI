@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:focubili/core/router/app_router.dart';
@@ -157,6 +158,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(bar, findsOneWidget);
     expect(find.byKey(const Key('search-learning-list')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  /// 页面过渡刚开始时底栏就应跟随目标格，避免玻璃指示器松手后先回原格再追过去。
+  testWidgets('玻璃底栏在页面切换开始时立即跟随目标格', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      AppBehaviorPreferencesService.liquidGlassBottomBarKey: true,
+    });
+    await _pumpMainShell(tester);
+
+    final Finder bar = find.byKey(const Key('liquid-glass-bottom-bar'));
+    await tester.tap(find.descendant(of: bar, matching: find.text('关注')).first);
+    // 只推进一帧：页面过渡尚未结束，但底栏高亮必须已经在目标格。
+    await tester.pump();
+    expect(tester.widget<GlassTabBar>(bar).selectedIndex, 1);
+
+    await tester.pumpAndSettle();
+    expect(tester.widget<GlassTabBar>(bar).selectedIndex, 1);
     expect(tester.takeException(), isNull);
   });
 

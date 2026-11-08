@@ -1,48 +1,38 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 
-/// 静默启动页：单色焦点标记 + 一行 Slogan，约 420ms 后交给主界面。
+/// 静默启动页：全屏铺满与原生启动背景一致的图片，资源就绪后交给主界面。
 class SplashScreen extends StatefulWidget {
-  /// 创建启动页；动画只播放一次，不循环。
+  /// 创建启动页；图片只做一次淡入，不循环、不额外叠加文案。
   const SplashScreen({super.key});
+
+  /// 启动图资源路径；Android/iOS 原生启动背景使用同一张图片。
+  static const String imageAsset = 'assets/splash/bilibili_splash.png';
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-/// 驱动 Slogan 在 Logo 之后淡入，并把系统栏图标交给应用主题统一管理。
+/// 用 300ms 淡入替代首帧硬切，避免原生启动背景切换到 Flutter 时闪白。
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  /// 与 Lottie 动画总时长保持一致，避免两段动效脱节。
-  static const Duration _duration = Duration(milliseconds: 420);
-
-  /// 轻色纸面背景，与 Flutter 首页保持同一中性阶。
-  static const Color _backgroundLight = Color(0xFFFAFAF8);
-
-  /// 深色背景，与应用主界面的深色底一致。
-  static const Color _backgroundDark = Color(0xFF121216);
-
-  /// 深色模式下的品牌提亮色，保证暗底上的可读对比。
-  static const Color _brandDark = Color(0xFF8CA6EE);
+  /// 淡入时长；启动门控至少展示该时长，保证过渡完整。
+  static const Duration _fadeDuration = Duration(milliseconds: 300);
 
   late final AnimationController _controller;
-  late final Animation<double> _sloganOpacity;
+  late final Animation<double> _opacity;
 
-  /// 启动动画立即播放，Slogan 在 Logo 完成大部分上浮后再出现。
+  /// 首帧立即开始淡入，与并行资源预热互不阻塞。
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: _duration)
+    _controller = AnimationController(vsync: this, duration: _fadeDuration)
       ..forward();
-    _sloganOpacity = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.28, 0.81, curve: Curves.easeOut),
-    );
+    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
   }
 
-  /// 释放动画控制器，避免页面提前切换后继续占用帧回调。
+  /// 释放动画控制器，避免启动页切走后继续占用帧回调。
   @override
   void dispose() {
     _controller.dispose();
@@ -51,65 +41,23 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    final Size window = MediaQuery.sizeOf(context);
-    final bool wide = window.width >= 900;
-    final bool short = window.height < 640;
-    final double logoSize = wide ? 112 : (short ? 72 : 96);
-    final double offsetY = wide ? -32 : (short ? -12 : -24);
-    final double sloganSize = wide ? 14 : (short ? 12 : 13);
-    final Color brand = isDark ? _brandDark : const Color(0xFF2B57C4);
     return Scaffold(
-      backgroundColor: isDark ? _backgroundDark : _backgroundLight,
-      body: SafeArea(
-        child: Center(
-          child: Transform.translate(
-            offset: Offset(0, offsetY),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  // ColorFiltered 把单色 Lottie 标记染成当前模式的品牌色。
-                  ColorFiltered(
-                    colorFilter: ColorFilter.mode(brand, BlendMode.srcIn),
-                    child: SizedBox.square(
-                      dimension: logoSize,
-                      child: Lottie.asset(
-                        'assets/splash/focubili_splash.json',
-                        key: const Key('splash-logo'),
-                        repeat: false,
-                        fit: BoxFit.contain,
-                        // 资源损坏时保留纯色标记，启动流程不被动画阻塞。
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                          Icons.adjust_rounded,
-                          size: logoSize,
-                          color: brand,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: short ? 12 : (wide ? 20 : 16)),
-                  FadeTransition(
-                    opacity: _sloganOpacity,
-                    child: Text(
-                      '安静地，专注一件事',
-                      key: const Key('splash-slogan'),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: sloganSize,
-                        height: 1.4,
-                        letterSpacing: 0.4,
-                        color: colors.onSurface.withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      // 启动图为白底构图，固定使用白色背景，原生启动背景与裁切留白保持同色。
+      backgroundColor: Colors.white,
+      body: SizedBox.expand(
+        child: FadeTransition(
+          opacity: _opacity,
+          child: Image.asset(
+            SplashScreen.imageAsset,
+            key: const Key('splash-image'),
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            filterQuality: FilterQuality.medium,
+            // 图片缺失时保留纯白背景，启动流程不被资源异常阻塞。
+            errorBuilder:
+                (BuildContext context, Object error, StackTrace? stack) {
+                  return const ColoredBox(color: Colors.white);
+                },
           ),
         ),
       ),
@@ -117,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-/// 启动门控：启动页至少展示动画时长，异步预热最多等待 600ms 后进入主界面。
+/// 启动门控：至少展示淡入时长，并等待全部启动资源加载完成后再显示主界面。
 class SplashGate extends StatefulWidget {
   /// 创建启动门控；测试或桌面调试可关闭启动页直接显示子组件。
   const SplashGate({
@@ -130,14 +78,14 @@ class SplashGate extends StatefulWidget {
   final Widget child;
   final bool enabled;
 
-  /// 与启动动画并行的异步初始化；超时后不再阻塞主界面。
+  /// 与启动动画并行的资源加载；全部完成后才切换主界面。
   final Future<void> Function()? warmUp;
 
   @override
   State<SplashGate> createState() => _SplashGateState();
 }
 
-/// 协调动画时长与预热完成时间，并用 150ms 交叉淡出到主界面。
+/// 协调淡入动画与资源加载，并用 150ms 交叉淡出到主界面。
 class _SplashGateState extends State<SplashGate> {
   bool _ready = false;
 
@@ -151,12 +99,14 @@ class _SplashGateState extends State<SplashGate> {
     unawaited(_runStartup());
   }
 
-  /// 动画与预热并行；预热超时也继续进入主界面，剩余任务在后台完成。
+  /// 动画与资源加载并行；资源未就绪时继续停留启动页，避免首屏出现占位。
   Future<void> _runStartup() async {
-    final Future<void> warmUp = widget.warmUp?.call() ?? Future<void>.value();
+    // 预热失败也要放行主界面，否则启动页会永久停留。
+    final Future<void> warmUp = (widget.warmUp?.call() ?? Future<void>.value())
+        .catchError((Object _) {});
     await Future.wait<void>(<Future<void>>[
       Future<void>.delayed(const Duration(milliseconds: 420)),
-      warmUp.timeout(const Duration(milliseconds: 600), onTimeout: () {}),
+      warmUp,
     ]);
     if (mounted) {
       setState(() => _ready = true);

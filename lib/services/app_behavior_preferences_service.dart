@@ -65,9 +65,9 @@ class AppBehaviorPreferencesService {
   Future<bool> saveWbiSigningEnabled(bool enabled) =>
       _saveBool(_wbiSigningEnabledKey, enabled);
 
-  /// 读取底栏风格开关；没有旧配置或读取失败时使用经典 B站 底栏。
+  /// 读取底栏风格开关；没有旧配置或读取失败时默认启用液态玻璃底栏。
   Future<bool> loadLiquidGlassBottomBar() =>
-      _loadBool(liquidGlassBottomBarKey, defaultValue: false);
+      _loadBool(liquidGlassBottomBarKey, defaultValue: true);
 
   /// 保存底栏风格开关；写入成功后通知主框架立即切换底栏样式。
   Future<bool> saveLiquidGlassBottomBar(bool enabled) =>

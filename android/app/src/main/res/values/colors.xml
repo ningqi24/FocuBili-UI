@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="icon_bg">#E3EEFC</color>
-    <!-- 启动页与 Flutter 首帧使用同一纸面底色，避免进入前出现白闪。 -->
-    <color name="splash_background">#FAFAF8</color>
+    <!-- 启动图为白底构图，原生启动底色与其留白一致，避免进入前出现色差。 -->
+    <color name="splash_background">#FFFFFF</color>
     <color name="splash_mark">#2B57C4</color>
 </resources>

@@ -434,8 +434,8 @@ void main() {
     expect(await behaviorService.loadWatchHistoryEnabled(), isFalse);
   });
 
-  /// 验证液态玻璃底栏开关默认关闭，保存后广播给主框架即时切换。
-  testWidgets('液态玻璃底栏开关默认关闭并可保存', (WidgetTester tester) async {
+  /// 验证液态玻璃底栏开关默认开启，关闭后保存并广播给主框架即时切换。
+  testWidgets('液态玻璃底栏开关默认开启并可关闭', (WidgetTester tester) async {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
     final AppBehaviorPreferencesService behaviorService =
         AppBehaviorPreferencesService(
@@ -461,13 +461,14 @@ void main() {
     );
     await tester.ensureVisible(toggle);
     await tester.pumpAndSettle();
-    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+    // 新安装或未保存过偏好时默认启用液态玻璃底栏。
+    expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
 
     final int changesBefore = AppBehaviorPreferencesService.changes.value;
     await tester.tap(toggle);
     await tester.pumpAndSettle();
-    expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
-    expect(await behaviorService.loadLiquidGlassBottomBar(), isTrue);
+    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+    expect(await behaviorService.loadLiquidGlassBottomBar(), isFalse);
     expect(AppBehaviorPreferencesService.changes.value, changesBefore + 1);
   });
 

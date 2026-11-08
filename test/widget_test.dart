@@ -1337,8 +1337,9 @@ void main() {
     expect(app.themeMode, ThemeMode.system);
     expect(find.text('Focubili-UIX'), findsWidgets);
     expect(find.byKey(const Key('home-start-search')), findsOneWidget);
-    expect(find.text('首页'), findsOneWidget);
-    expect(find.text('我的'), findsOneWidget);
+    // 液态玻璃底栏默认开启，标签可能同时存在未选中/选中两层。
+    expect(find.text('首页'), findsWidgets);
+    expect(find.text('我的'), findsWidgets);
   });
 
   /// 验证根组件启动时恢复本机深色选择，而不是每次强制跟随系统。

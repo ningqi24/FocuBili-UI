@@ -105,8 +105,66 @@ Future<void> _prepareWindowsDesktop({
   }
 }
 
-/// 启动动画期间并行预热缓存与订阅；失败或超时都不影响主界面。
+/// 启动页展示期间读取并解码全部声明的图片资源，避免主界面首帧出现占位或闪烁。
+Future<void> _preloadStartupResources() async {
+  try {
+    final AssetManifest manifest = await AssetManifest.loadFromAssetBundle(
+      rootBundle,
+    );
+    final List<String> assets = manifest.listAssets();
+    // 先把所有声明资源读入内存，字体与图片随后分别由引擎和图片缓存接管。
+    await Future.wait<void>(
+      assets.map((String asset) async {
+        try {
+          await rootBundle.load(asset);
+        } catch (_) {}
+      }),
+    );
+    // 图片需要真正解码进图片缓存，主界面复用时才能首帧直接绘制。
+    await Future.wait<void>(
+      assets.where(_isImageAsset).map(_precacheAssetImage),
+    );
+  } catch (_) {}
+}
+
+/// 只预加载构建产物中的图片资源，JSON 等文本资源按需读取。
+bool _isImageAsset(String asset) {
+  final String lower = asset.toLowerCase();
+  return lower.endsWith('.png') ||
+      lower.endsWith('.jpg') ||
+      lower.endsWith('.jpeg') ||
+      lower.endsWith('.webp') ||
+      lower.endsWith('.gif');
+}
+
+/// 将单张图片解码到全局图片缓存；失败时静默跳过，不阻塞启动门控。
+Future<void> _precacheAssetImage(String asset) {
+  final Completer<void> completer = Completer<void>();
+  final ImageStream stream = AssetImage(
+    asset,
+  ).resolve(ImageConfiguration.empty);
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener(
+    (ImageInfo image, bool synchronousCall) {
+      stream.removeListener(listener);
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    },
+    onError: (Object error, StackTrace? stackTrace) {
+      stream.removeListener(listener);
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    },
+  );
+  stream.addListener(listener);
+  return completer.future;
+}
+
+/// 启动动画期间并行加载资源、预热缓存与订阅；全部完成后才显示主界面。
 Future<void> _warmUpStartup() async {
+  await _preloadStartupResources();
   try {
     await CacheLifecycle.initialize();
   } catch (_) {}
@@ -174,7 +232,7 @@ Future<void> main(List<String> args) async {
       brightnessResolver: Theme.maybeBrightnessOf,
       child: const FocuBiliApp(
         checkForUpdatesOnStart: true,
-        // 真实启动展示启动页；缓存与订阅预热与 420ms 动画并行进行。
+        // 真实启动展示启动页；资源加载与缓存预热全部完成后进入主界面。
         showSplash: true,
         startupTasks: _warmUpStartup,
       ),
