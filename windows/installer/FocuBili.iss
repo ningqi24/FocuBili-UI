@@ -1,4 +1,4 @@
-#define AppName "Focubili-UIX"
+#define AppName "FocuBili-UI"
 #define AppPublisher "ningqi24"
 #define AppExecutable "FocuBili.exe"
 
@@ -48,8 +48,8 @@ RestartApplications=no
 AppMutex=FocuBili.SingleInstance
 SetupLogging=yes
 VersionInfoCompany=ningqi24
-VersionInfoDescription=Focubili-UIX Windows 安装程序
-VersionInfoProductName=Focubili-UIX
+VersionInfoDescription=FocuBili-UI Windows 安装程序
+VersionInfoProductName=FocuBili-UI
 VersionInfoProductVersion={#AppVersion}
 VersionInfoVersion={#AppVersion}.{#AppBuild}
 ChangesAssociations=no
@@ -141,10 +141,10 @@ chinesesimplified.StatusUninstalling=正在卸载 %1...
 [CustomMessages]
 chinesesimplified.AdditionalShortcuts=附加快捷方式：
 chinesesimplified.CreateDesktopIcon=创建桌面快捷方式
-chinesesimplified.LaunchFocuBili=启动 Focubili-UIX
+chinesesimplified.LaunchFocuBili=启动 FocuBili-UI
 english.AdditionalShortcuts=Additional shortcuts:
 english.CreateDesktopIcon=Create a desktop shortcut
-english.LaunchFocuBili=Launch Focubili-UIX
+english.LaunchFocuBili=Launch FocuBili-UI
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalShortcuts}"; Flags: unchecked

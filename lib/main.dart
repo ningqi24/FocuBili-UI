@@ -97,7 +97,7 @@ Future<void> _prepareWindowsDesktop({
       minimumSize: minimumSize,
       center: true,
       backgroundColor: Color(0xFFF7F8FC),
-      title: 'Focubili-UIX',
+      title: 'FocuBili-UI',
     ),
   );
   await windowManager.show();
@@ -137,6 +137,15 @@ bool _isImageAsset(String asset) {
       lower.endsWith('.jpeg') ||
       lower.endsWith('.webp') ||
       lower.endsWith('.gif');
+}
+
+/// 启动初始化失败不应阻塞首帧，统一在这里吞掉异常。
+Future<void> _ignoreStartupFailure(Future<void> task) async {
+  try {
+    await task;
+  } catch (_) {
+    // 失败时沿用默认配置继续启动。
+  }
 }
 
 /// 将单张图片解码到全局图片缓存；失败时静默跳过，不阻塞启动门控。
@@ -204,16 +213,18 @@ Future<void> main(List<String> args) async {
     return;
   }
   _installProblemDiagnostics();
-  // 液态玻璃底栏需要预先载入着色器，避免首帧出现空白或闪烁；失败时继续启动。
-  try {
-    await LiquidGlassWidgets.initialize(enablePerformanceMonitor: false);
-  } catch (_) {}
+  // 首帧前的三项初始化互不依赖，并行执行可以把系统启动页的停留时间压到最短。
+  // 液态玻璃底栏先载入着色器，避免首帧出现空白或闪烁；失败时继续启动。
+  final Future<void> glassReady = _ignoreStartupFailure(
+    LiquidGlassWidgets.initialize(enablePerformanceMonitor: false),
+  );
   // 布局只在启动时载入；设置页明确提示重启，避免播放中强制旋转。
-  try {
-    await const AppLayoutPreferencesService().initialize();
-  } catch (_) {
-    // 偏好读取失败时仍使用原有自动布局，让应用可进入设置恢复。
-  }
+  final Future<void> layoutReady = _ignoreStartupFailure(
+    const AppLayoutPreferencesService().initialize(),
+  );
+  // 启动图提前解码进图片缓存，Flutter 首帧就能直接绘制启动图而不是白屏。
+  final Future<void> splashReady = _precacheAssetImage(SplashScreen.imageAsset);
+  await Future.wait<void>(<Future<void>>[glassReady, layoutReady, splashReady]);
   if (AppPlatformDetector.current == AppPlatform.ios) {
     final views = WidgetsBinding.instance.platformDispatcher.views;
     if (views.isNotEmpty) {
@@ -232,8 +243,6 @@ Future<void> main(List<String> args) async {
   SystemChrome.setSystemUIOverlayStyle(
     AppTheme.systemOverlayStyle(Brightness.light),
   );
-  // 先把启动图解码进图片缓存，Flutter 首帧才能与原生启动屏逐帧衔接。
-  await _precacheAssetImage(SplashScreen.imageAsset);
   runApp(
     LiquidGlassWidgets.wrap(
       // MaterialApp 下必须桥接应用主题的明暗，否则玻璃边框和阴影在系统深色模式下会错位。

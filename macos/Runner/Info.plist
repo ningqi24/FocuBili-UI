@@ -29,7 +29,7 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>CFBundleDisplayName</key>
-	<string>Focubili-UIX</string>
+	<string>FocuBili-UI</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>zh_CN</string>
