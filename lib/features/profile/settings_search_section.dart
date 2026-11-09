@@ -21,7 +21,8 @@ final _settingsAliases = <Key, String>{
   Key('enable-focus-do-not-disturb'): '专注 勿扰 通知 Windows 系统专注',
   Key('theme-mode-setting'): '主题模式 浅色 深色 跟随系统 外观',
   Key('ui-text-size-preference'): '界面文字大小 字体 字号 缩放 大屏 放大 text font scale',
-  Key('theme-color-setting'): '主题强调色 静谧蓝 松绿 陶土 暮紫 石墨 国庆红 外观',
+  Key('theme-color-setting'):
+      '主题强调色 B站粉 品牌粉 粉色 静谧蓝 松绿 陶土 暮紫 石墨 国庆红 外观',
   Key('open-android-permissions'): '权限管理 系统能力 通知 后台运行',
   Key('enable-startup-update-check'): '启动时检查更新 GitHub Release',
   Key('open-cache-management'): '缓存管理 图片 头像 封面 视频 字幕 存储 空间 自动 清理 上限',
@@ -84,28 +85,63 @@ class SettingsSearchSection extends StatelessWidget {
     return terms.every(text.contains);
   }
 
-  /// 无结果不占空间；有结果保留分类标题、分隔线和实际可操作设置。
+  /// 无结果不占空间；有结果展示分类标题、卡片容器和实际可操作设置。
   @override
   Widget build(BuildContext context) {
     if (isEmpty) return const SizedBox.shrink();
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ListTile(
-          leading: Icon(icon),
-          title: Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 10),
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: colors.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const Divider(height: 1),
-        for (var index = 0; index < items.length; index++) ...[
-          items[index],
-          if (index < items.length - 1) const Divider(height: 1),
+          Material(
+            color: colors.surface,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: BorderSide(
+                color: colors.outlineVariant.withValues(alpha: 0.6),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var index = 0; index < items.length; index++) ...[
+                  items[index],
+                  if (index < items.length - 1)
+                    Divider(
+                      height: 1,
+                      indent: 16,
+                      endIndent: 16,
+                      color: colors.outlineVariant.withValues(alpha: 0.6),
+                    ),
+                ],
+              ],
+            ),
+          ),
         ],
-      ],
+      ),
     );
   }
 }

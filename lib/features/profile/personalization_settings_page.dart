@@ -9,6 +9,7 @@ import '../../models/playback_preferences.dart';
 import '../../services/app_behavior_preferences_service.dart';
 import '../../services/playback_preferences_service.dart';
 import '../../services/app_layout_preferences_service.dart';
+import '../../services/app_theme_mode_service.dart';
 import '../../services/app_update_service.dart';
 import '../../services/focus_notification_service.dart';
 import '../../services/focus_preferences_service.dart';
@@ -24,6 +25,7 @@ import 'data_transfer_page.dart';
 
 /// 可选择的主题强调色预设，供设置页以色块形式展示。
 const List<(String, int)> _themeColorOptions = <(String, int)>[
+  ('B站粉', defaultThemeSeedColorValue),
   ('静谧蓝', 0xFF2B57C4),
   ('松绿', 0xFF3E6E63),
   ('陶土', 0xFF8C5A45),
@@ -1312,14 +1314,62 @@ class _PersonalizationSettingsPageState
     required String subtitle,
     required _SettingsLevel level,
   }) {
-    return ListTile(
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
+    return Material(
       key: key,
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right_rounded),
-      // 分类入口函数在当前设置路由内切换层级，保留已经加载的设置状态。
-      onTap: () => setState(() => _settingsLevel = level),
+      color: colors.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.6)),
+      ),
+      child: InkWell(
+        // 分类入口函数在当前设置路由内切换层级，保留已经加载的设置状态。
+        onTap: () => setState(() => _settingsLevel = level),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colors.primaryContainer,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, size: 22, color: colors.onPrimaryContainer),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: colors.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1373,7 +1423,7 @@ class _PersonalizationSettingsPageState
               subtitle: '账号只读、剪贴板与本机记录',
               level: _SettingsLevel.accountAndPrivacy,
             ),
-            const Divider(height: 1),
+            const SizedBox(height: 12),
             _buildSettingsCategoryTile(
               key: const Key('open-playback-focus-settings'),
               icon: Icons.play_circle_outline_rounded,
@@ -1381,7 +1431,7 @@ class _PersonalizationSettingsPageState
               subtitle: '清晰度、播放器手势与专注模式',
               level: _SettingsLevel.playbackAndFocus,
             ),
-            const Divider(height: 1),
+            const SizedBox(height: 12),
             _buildSettingsCategoryTile(
               key: const Key('open-appearance-application-settings'),
               icon: Icons.tune_rounded,

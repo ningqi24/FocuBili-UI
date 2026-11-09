@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 
 /// 集中保存应用主题，避免每个页面重复定义颜色和控件样式。
 ///
-/// 视觉遵循“Quiet Focus 静谧专注”设计规范：中性阶固定，唯一强调色为静谧蓝，
+/// 视觉遵循“Quiet Focus 静谧专注”设计规范：中性阶固定，默认强调色为 B站粉，
 /// 只有用户主动选择时才允许切换为其它低饱和强调色。
 abstract final class AppTheme {
-  static const Color _brandColor = Color(0xFF2B57C4);
+  static const Color _brandColor = Color(0xFFFB7299);
 
   /// 国庆红的持久化色值，与设置页色块使用同一个常量。
   static const int nationalDayRedValue = 0xFFCE2D35;
@@ -114,16 +114,16 @@ abstract final class AppTheme {
           onError: isLight ? Colors.white : const Color(0xFF2A1210),
         );
     if (seedColor == _brandColor) {
-      // 静谧蓝的精确令牌：主色与容器色直接取自设计规范。
+      // B站粉的精确令牌：主色与容器色直接取自设计规范。
       colors = colors.copyWith(
-        primary: isLight ? _brandColor : const Color(0xFF9DB4EE),
-        onPrimary: isLight ? Colors.white : _inkLight,
+        primary: isLight ? _brandColor : const Color(0xFFFFB3C8),
+        onPrimary: isLight ? Colors.white : const Color(0xFF3A0A1A),
         primaryContainer: isLight
-            ? const Color(0xFFE6EBF8)
-            : const Color(0xFF2B3A63),
+            ? const Color(0xFFFDE3EB)
+            : const Color(0xFF5E2237),
         onPrimaryContainer: isLight
-            ? const Color(0xFF16305F)
-            : const Color(0xFFDCE4F8),
+            ? const Color(0xFF6A1B33)
+            : const Color(0xFFFFD9E4),
       );
     } else {
       final accent = _accessibleAccent(seedColor, colors.surface, brightness);

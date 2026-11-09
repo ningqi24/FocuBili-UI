@@ -4,8 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// 允许测试用内存版 SharedPreferences 替代真实设备存储。
 typedef ThemeModePreferencesLoader = Future<SharedPreferences> Function();
 
-/// 应用默认的主题强调色，与旧版本主题保持一致。
-const int defaultThemeSeedColorValue = 0xFF2B57C4;
+/// 应用默认的主题强调色：B站粉。
+const int defaultThemeSeedColorValue = 0xFFFB7299;
 
 /// 当前设备读取和保存全应用外观模式与主题强调色，不会上传用户选择。
 class AppThemeModeService {
