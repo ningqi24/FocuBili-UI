@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 11 及以下全屏展示启动图，与 Flutter 启动页使用同一张图片。 -->
+<!-- Android 11 及以下全屏展示启动图，与 Flutter 启动页使用同一张图片。
+     BitmapDrawable 只支持 fill/center 等 Gravity 值，没有 centerCrop；
+     启动图为 1080x2400 白底构图，fill 在常见手机比例下与 BoxFit.cover 的差异仅 1-3%。 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
     <item>

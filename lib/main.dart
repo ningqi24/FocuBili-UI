@@ -2,6 +2,7 @@ import 'services/app_behavior_preferences_service.dart';
 import 'services/media_cache_service.dart';
 import 'services/cache_lifecycle.dart';
 import 'services/image_resource_cache.dart';
+import 'features/splash/splash_screen.dart';
 import 'dart:async';
 import 'dart:ui';
 
@@ -231,6 +232,8 @@ Future<void> main(List<String> args) async {
   SystemChrome.setSystemUIOverlayStyle(
     AppTheme.systemOverlayStyle(Brightness.light),
   );
+  // 先把启动图解码进图片缓存，Flutter 首帧才能与原生启动屏逐帧衔接。
+  await _precacheAssetImage(SplashScreen.imageAsset);
   runApp(
     LiquidGlassWidgets.wrap(
       // MaterialApp 下必须桥接应用主题的明暗，否则玻璃边框和阴影在系统深色模式下会错位。

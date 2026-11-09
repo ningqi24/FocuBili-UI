@@ -2,42 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-/// 静默启动页：全屏铺满与原生启动背景一致的图片，资源就绪后交给主界面。
-class SplashScreen extends StatefulWidget {
-  /// 创建启动页；图片只做一次淡入，不循环、不额外叠加文案。
+/// 启动页：首帧直接铺满与原生启动背景一致的图片，资源就绪后交给主界面。
+class SplashScreen extends StatelessWidget {
+  /// 创建启动页；首帧即满不透明，避免与原生启动屏之间闪一次品牌图。
   const SplashScreen({super.key});
 
   /// 启动图资源路径；Android/iOS 原生启动背景使用同一张图片。
   static const String imageAsset = 'assets/splash/bilibili_splash.png';
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-/// 用 300ms 淡入替代首帧硬切，避免原生启动背景切换到 Flutter 时闪白。
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  /// 淡入时长；启动门控至少展示该时长，保证过渡完整。
-  static const Duration _fadeDuration = Duration(milliseconds: 300);
-
-  late final AnimationController _controller;
-  late final Animation<double> _opacity;
-
-  /// 首帧立即开始淡入，与并行资源预热互不阻塞。
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: _fadeDuration)
-      ..forward();
-    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-  }
-
-  /// 释放动画控制器，避免启动页切走后继续占用帧回调。
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,27 +16,24 @@ class _SplashScreenState extends State<SplashScreen>
       // 启动图为白底构图，固定使用白色背景，原生启动背景与裁切留白保持同色。
       backgroundColor: Colors.white,
       body: SizedBox.expand(
-        child: FadeTransition(
-          opacity: _opacity,
-          child: Image.asset(
-            SplashScreen.imageAsset,
-            key: const Key('splash-image'),
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
-            filterQuality: FilterQuality.medium,
-            // 图片缺失时保留纯白背景，启动流程不被资源异常阻塞。
-            errorBuilder:
-                (BuildContext context, Object error, StackTrace? stack) {
-                  return const ColoredBox(color: Colors.white);
-                },
-          ),
+        child: Image.asset(
+          imageAsset,
+          key: const Key('splash-image'),
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          filterQuality: FilterQuality.medium,
+          // 图片缺失时保留纯白背景，启动流程不被资源异常阻塞。
+          errorBuilder:
+              (BuildContext context, Object error, StackTrace? stack) {
+                return const ColoredBox(color: Colors.white);
+              },
         ),
       ),
     );
   }
 }
 
-/// 启动门控：至少展示淡入时长，并等待全部启动资源加载完成后再显示主界面。
+/// 启动门控：至少展示最短时长，并等待全部启动资源加载完成后再显示主界面。
 class SplashGate extends StatefulWidget {
   /// 创建启动门控；测试或桌面调试可关闭启动页直接显示子组件。
   const SplashGate({
@@ -85,8 +53,11 @@ class SplashGate extends StatefulWidget {
   State<SplashGate> createState() => _SplashGateState();
 }
 
-/// 协调淡入动画与资源加载，并用 150ms 交叉淡出到主界面。
+/// 协调最短展示时长与资源加载，并用 150ms 交叉淡出到主界面。
 class _SplashGateState extends State<SplashGate> {
+  /// 资源加载的最长等待；插件 Future 卡住时也要放行，避免永久停留启动页。
+  static const Duration _warmUpTimeout = Duration(seconds: 8);
+
   bool _ready = false;
 
   @override
@@ -99,17 +70,25 @@ class _SplashGateState extends State<SplashGate> {
     unawaited(_runStartup());
   }
 
-  /// 动画与资源加载并行；资源未就绪时继续停留启动页，避免首屏出现占位。
+  /// 资源加载与最短展示并行；失败或超时都放行，避免首屏出现占位或卡死。
   Future<void> _runStartup() async {
-    // 预热失败也要放行主界面，否则启动页会永久停留。
-    final Future<void> warmUp = (widget.warmUp?.call() ?? Future<void>.value())
-        .catchError((Object _) {});
+    final Future<void> warmUp = _warmUpSafely();
     await Future.wait<void>(<Future<void>>[
       Future<void>.delayed(const Duration(milliseconds: 420)),
       warmUp,
     ]);
     if (mounted) {
       setState(() => _ready = true);
+    }
+  }
+
+  /// 预热失败或超过等待上限都放行主界面，避免启动页永久停留。
+  Future<void> _warmUpSafely() async {
+    final Future<void> task = widget.warmUp?.call() ?? Future<void>.value();
+    try {
+      await task.timeout(_warmUpTimeout);
+    } catch (_) {
+      // 忽略失败与超时，主界面照常显示。
     }
   }
 
