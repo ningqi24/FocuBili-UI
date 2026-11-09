@@ -72,10 +72,10 @@ void main() {
     expect(find.text('主界面'), findsNothing);
 
     // 预热很快完成，但最短展示未结束前仍停留在启动页。
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(SplashScreen), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('主界面'), findsOneWidget);
     expect(tester.takeException(), isNull);

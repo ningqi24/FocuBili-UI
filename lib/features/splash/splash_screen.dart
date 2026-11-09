@@ -55,6 +55,9 @@ class SplashGate extends StatefulWidget {
 
 /// 协调最短展示时长与资源加载，并用 150ms 交叉淡出到主界面。
 class _SplashGateState extends State<SplashGate> {
+  /// 启动图首帧即完整可见，只需极短的停留避免一帧闪烁，不再为旧淡入动画留出等待。
+  static const Duration _minimumDisplay = Duration(milliseconds: 150);
+
   /// 资源加载的最长等待；插件 Future 卡住时也要放行，避免永久停留启动页。
   static const Duration _warmUpTimeout = Duration(seconds: 8);
 
@@ -74,7 +77,7 @@ class _SplashGateState extends State<SplashGate> {
   Future<void> _runStartup() async {
     final Future<void> warmUp = _warmUpSafely();
     await Future.wait<void>(<Future<void>>[
-      Future<void>.delayed(const Duration(milliseconds: 420)),
+      Future<void>.delayed(_minimumDisplay),
       warmUp,
     ]);
     if (mounted) {
