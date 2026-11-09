@@ -53,7 +53,10 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   # iOS 26 液态玻璃底栏；真实着色器折射，Skia/Web 自动降级，Android 无原生代码。
-  liquid_glass_widgets: 1.16.1
+  # 1.16.1 原包将 iOS 最低版本限制为 15.0；本地内置版本只下调部署目标到 13.0，
+  # 以继续支持 iOS 13/14，原生代码和 Dart 实现保持不变。
+  liquid_glass_widgets:
+    path: third_party/liquid_glass_widgets
   # 8.3.1 兼容项目当前 AGP 8.11.1；9+ 要求 AGP 8.12.1/Kotlin 2.2。
   package_info_plus: ^8.3.1
   path_provider: ^2.1.6

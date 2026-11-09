@@ -43,7 +43,7 @@ extension _FocusDashboardHomeLayout on _FocusDashboardState {
             horizontalPadding,
             16,
             horizontalPadding,
-            12,
+            12 + FloatingBottomBarInset.of(context),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

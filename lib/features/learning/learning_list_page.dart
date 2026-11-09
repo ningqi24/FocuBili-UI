@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/layout/adaptive_page_frame.dart';
+import '../../core/layout/floating_bottom_bar_inset.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/learning_list_entry.dart';
 import '../../services/bilibili_service.dart';
@@ -858,7 +859,7 @@ class _LearningListPageState extends State<LearningListPage> {
       onRefresh: _reloadEntries,
       child: ReorderableListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: 0),
+        padding: EdgeInsets.only(bottom: FloatingBottomBarInset.of(context)),
         buildDefaultDragHandles: false,
         header: _buildListHeader(),
         footer: _buildListFooter(completedEntries),

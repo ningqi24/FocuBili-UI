@@ -23,6 +23,7 @@
 | `media_kit` | ^1.2.6 | 桌面/Apple 播放核心 |
 | `media_kit_libs_windows_video` / `ios` / `macos` / `linux` | ^1.0.11 / ^1.1.4 / ^1.2.1 | libmpv / Apple 媒体库 |
 | `media_kit_video` | path（third_party） | 补丁版视频纹理组件 |
+| `liquid_glass_widgets` | path（third_party） | 液态玻璃底栏（iOS 部署目标下调到 13.0） |
 | `shared_preferences` | ^2.5.5 | JSON 偏好存储 |
 | `sqflite` | ^2.4.2 | 订阅原子快照 |
 | `workmanager` | path（third_party） | Android 后台订阅 |
@@ -42,8 +43,9 @@
 | [third_party/desktop_webview_window](../../third_party/desktop_webview_window) | `desktop_webview_window` 0.3.0+focubili.1 | Windows 登录导航不中断；避免桌面 WebView 抢焦点 |
 | [third_party/media_kit_video](../../third_party/media_kit_video) | `media_kit_video` 2.0.1 | 视频纹理/表面行为修正，配合桌面播放 |
 | [third_party/workmanager](../../third_party/workmanager) | `workmanager` 0.10.10 | Android-only 后台订阅入口，与 headless engine 接线 |
+| [third_party/liquid_glass_widgets](../../third_party/liquid_glass_widgets) | `liquid_glass_widgets` 1.16.1 | 上游要求 iOS 15.0；仅把 SPM/Pod 部署目标下调到 13.0，继续支持 iOS 13/14 |
 
-这三个包通过 `path:` 引用，不使用 pub 版本；升级时需同步检查补丁内容。
+这些包通过 `path:` 引用，不使用 pub 版本；升级时需同步检查补丁内容。
 
 ## 7.3 原生依赖
 

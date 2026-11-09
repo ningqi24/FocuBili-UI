@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show FloatingHeaderSnapConfiguration;
 import 'package:focubili/features/common/app_network_image.dart';
 
+import '../../core/layout/floating_bottom_bar_inset.dart';
 import '../../models/subscription.dart';
 import '../../models/public_profile.dart';
 import '../../services/subscription_service.dart';
@@ -516,7 +517,12 @@ class _SubscriptionUpdatesPageState extends State<SubscriptionUpdatesPage>
                         ),
                       ),
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+                      padding: EdgeInsets.fromLTRB(
+                        12,
+                        0,
+                        12,
+                        24 + FloatingBottomBarInset.of(context),
+                      ),
                       sliver: SliverList.builder(
                         itemCount: rows.length,
                         findChildIndexCallback: (key) => key is ValueKey<String>

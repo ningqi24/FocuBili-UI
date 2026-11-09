@@ -3,6 +3,7 @@ import '../subscriptions/subscription_updates_page.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/layout/adaptive_layout.dart';
+import '../../core/layout/floating_bottom_bar_inset.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/editable_card_board.dart';
@@ -761,7 +762,7 @@ class _ProfilePageState extends State<ProfilePage> {
               horizontalPadding,
               workspace ? 8 : 16,
               horizontalPadding,
-              20,
+              20 + FloatingBottomBarInset.of(context),
             ),
             child: EditableCardBoard(
               key: const Key('profile-card-board'),

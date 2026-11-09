@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../core/layout/adaptive_layout.dart';
 import '../../core/layout/adaptive_two_column_list.dart';
 import '../../core/layout/app_scroll_behavior.dart';
+import '../../core/layout/floating_bottom_bar_inset.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_search.dart';
@@ -1413,7 +1414,12 @@ class _SearchPageState extends State<SearchPage> {
                       ),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        padding: EdgeInsets.fromLTRB(
+                          8,
+                          0,
+                          8,
+                          FloatingBottomBarInset.of(context),
+                        ),
                         child: _buildResultOverlay(),
                       ),
                     ),

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show SliverConstraints;
 
 import '../../core/layout/adaptive_layout.dart';
+import '../../core/layout/floating_bottom_bar_inset.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/dashboard_layout_service.dart';
@@ -722,7 +723,8 @@ class _FocusDashboardState extends State<FocusDashboard> {
         if (widget.onOpenProfile != null) {
           return _buildHomeScreen(context);
         }
-        return CustomScrollView(
+        final double floatingBarInset = FloatingBottomBarInset.of(context);
+        final Widget content = CustomScrollView(
           controller: _scrollController,
           slivers: <Widget>[
             SliverAppBar.large(
@@ -754,6 +756,14 @@ class _FocusDashboardState extends State<FocusDashboard> {
             ),
             _buildCardsSliver(context, activeSession, finishedSession),
           ],
+        );
+        if (floatingBarInset <= 0) {
+          return content;
+        }
+        // 页面铺满玻璃下方，滚动内容再让出底栏高度，避免最后一项被遮挡。
+        return Padding(
+          padding: EdgeInsets.only(bottom: floatingBarInset),
+          child: content,
         );
       },
     );

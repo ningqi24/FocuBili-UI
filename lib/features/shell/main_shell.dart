@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/layout/adaptive_layout.dart';
+import '../../core/layout/floating_bottom_bar_inset.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/app_behavior_preferences_service.dart';
@@ -572,14 +573,15 @@ class _MainShellState extends State<MainShell>
                 );
               }
               if (_liquidGlassBottomBar) {
-                // 玻璃底栏悬浮在页面之上；页面整体上移一个底栏高度，避免底部按钮被遮挡。
+                // 页面铺满整屏，玻璃底栏才能真正悬浮在内容之上并折射内容；
+                // 各页面通过作用域预留底栏高度，避免最后一项被遮挡。
                 final double barInset =
                     58 + 12 * 2 + MediaQuery.paddingOf(context).bottom;
                 return Stack(
                   children: <Widget>[
                     Positioned.fill(
-                      child: Padding(
-                        padding: EdgeInsets.only(bottom: barInset),
+                      child: FloatingBottomBarInset(
+                        value: barInset,
                         child: pageStack,
                       ),
                     ),
