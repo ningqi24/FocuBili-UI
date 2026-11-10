@@ -21,7 +21,7 @@ void main() {
     expect(
       workflow,
       contains(
-        '65EF1FB301FB1121C1803E752F5B1EB24E55846502D8B5478F0FC11F58E9A8A9',
+        'A76F54E738AE5C22BF7CCF2E38FC2C378020C188BB0EC503AD15712F01ADE3F9',
       ),
     );
     expect(workflow, contains(r'''stat -c '%s' "$apk"'''));
