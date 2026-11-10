@@ -57,9 +57,14 @@ jobs:
       - name: Require trusted source before accessing signing secrets
         env:
           REQUESTED_SHA: ${{ inputs.source_sha || github.sha }}
+          # 正式签名密钥只在下列仓库可用；fork 必须配置同一套密钥才能发布正式包。
+          TRUSTED_RELEASE_REPOSITORIES: 'L1Xu4n/FocuBili ningqi24/FocuBili-UI'
         shell: bash
         run: |
-          test "$GITHUB_REPOSITORY" = 'L1Xu4n/FocuBili'
+          case " $TRUSTED_RELEASE_REPOSITORIES " in
+            *" $GITHUB_REPOSITORY "*) ;;
+            *) echo "Untrusted repository: $GITHUB_REPOSITORY"; exit 1 ;;
+          esac
           case "$GITHUB_EVENT_NAME:$GITHUB_REF" in
             push:refs/heads/master|workflow_dispatch:refs/heads/dev|workflow_dispatch:refs/heads/master) ;;
             *) echo 'Signed builds require a trusted branch invocation'; exit 1 ;;
