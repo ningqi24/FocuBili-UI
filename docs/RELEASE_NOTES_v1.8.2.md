@@ -22,7 +22,7 @@
 ## 安装与兼容
 
 - Android 正式包使用 `com.focubili.app`，版本 `1.8.2`、构建号 `32`。本仓库 Release 由 fork 自己的密钥签名，与上游官方包签名不同，从官方版切换需先卸载；之后可覆盖升级本仓库的包。
-- Windows 提供 x64 安装包和便携包；Linux DEB 面向 Ubuntu 24.04 amd64 / x86-64。
+- Windows 提供 x64 安装包 `FocuBili-v1.8.2-windows-x64-setup.exe` 和便携包；Linux DEB 面向 Ubuntu 24.04 amd64 / x86-64。
 - macOS DMG 包含通用架构应用，使用 ad-hoc 签名，未做 Apple 公证，系统可能拦截首次打开。
 - iOS 提供未签名 IPA，需要自行签名才能安装，不是 App Store 或 TestFlight 分发。
 
