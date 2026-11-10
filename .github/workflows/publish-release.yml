@@ -146,8 +146,12 @@ jobs:
         run: |
           mkdir release
           mv staging/android/app-release.apk "release/FocuBili-v${VERSION}-android.apk"
-          mv "staging/windows/FocuBili-v${VERSION}-windows-x64-setup.exe" release/
-          mv "staging/windows/FocuBili-v${VERSION}-windows-x64-portable.zip" release/
+          windows_setup="$(find staging/windows -maxdepth 1 -name '*-windows-x64-setup.exe' -print -quit)"
+          windows_portable="$(find staging/windows -maxdepth 1 -name '*-windows-x64-portable.zip' -print -quit)"
+          test -n "$windows_setup"
+          test -n "$windows_portable"
+          mv "$windows_setup" "release/FocuBili-v${VERSION}-windows-x64-setup.exe"
+          mv "$windows_portable" "release/FocuBili-v${VERSION}-windows-x64-portable.zip"
           mv staging/macos/FocuBili-macos-preview.dmg "release/FocuBili-v${VERSION}-macos-universal.dmg"
           mv staging/ios/FocuBili-ios-unsigned.ipa "release/FocuBili-v${VERSION}-ios-unsigned.ipa"
           mv "staging/linux/FocuBili-v${VERSION}-linux-amd64.deb" release/

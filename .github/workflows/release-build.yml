@@ -10,6 +10,7 @@ on:
       - android/app/build.gradle
       - .github/workflows/release-build.yml
       - windows/installer/build_windows_packages.ps1
+      - windows/installer/FocuBili.iss
   workflow_dispatch:
   workflow_call:
     inputs:

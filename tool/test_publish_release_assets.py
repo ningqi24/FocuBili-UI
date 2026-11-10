@@ -114,6 +114,18 @@ class PublicReleaseAssetsTest(unittest.TestCase):
         result, _ = self.run_publisher(missing=f"{PREFIX}-windows-x64-portable.zip")
         self.assertNotEqual(result.returncode, 0)
 
+    def test_windows_packaging_uses_public_asset_names(self):
+        ps1 = (ROOT / "windows/installer/build_windows_packages.ps1").read_text(
+            encoding="utf-8"
+        )
+        iss = (ROOT / "windows/installer/FocuBili.iss").read_text(encoding="utf-8")
+        self.assertIn(
+            "FocuBili-v$($versionInfo.Version)-windows-x64-setup.exe", ps1
+        )
+        self.assertIn(
+            "OutputBaseFilename=FocuBili-v{#AppVersion}-windows-x64-setup", iss
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
