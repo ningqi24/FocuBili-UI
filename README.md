@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/L1Xu4n/FocuBili/releases/latest"><img src="https://img.shields.io/github/v/release/L1Xu4n/FocuBili?display_name=tag&sort=semver" alt="GitHub Release"></a>
+  <a href="https://github.com/ningqi24/FocuBili-UI/releases/latest"><img src="https://img.shields.io/github/v/release/ningqi24/FocuBili-UI?display_name=tag&sort=semver" alt="GitHub Release"></a>
   <img src="https://img.shields.io/badge/Flutter-3.44.6-02569B?logo=flutter" alt="Flutter 3.44.6">
   <img src="https://img.shields.io/badge/Android-7.0+-3DDC84?logo=android" alt="Android 7.0+">
   <img src="https://img.shields.io/badge/Windows-10%201809+-0078D4?logo=windows" alt="Windows 10 1809+">
@@ -22,18 +22,18 @@
 
 ## 下载与安装
 
-**[下载最新正式版](https://github.com/L1Xu4n/FocuBili/releases/latest)** · [v1.8.1 更新简报](docs/RELEASE_NOTES_v1.8.1.md) · [反馈问题](https://github.com/L1Xu4n/FocuBili/issues)
+**[下载最新正式版](https://github.com/ningqi24/FocuBili-UI/releases/latest)** · [v1.8.2 更新简报](docs/RELEASE_NOTES_v1.8.2.md) · [反馈问题](https://github.com/ningqi24/FocuBili-UI/issues)
 
 在 Release 页按设备选择安装包：
 
 | 平台 | 选择的文件 | 安装说明 |
 |---|---|---|
-| Android 7.0+ | `FocuBili-v1.8.1-android.apk` | 更新请直接覆盖安装，不要先卸载旧版 |
-| Windows 10 1809+ / x64 | `FocuBili-v1.8.1-windows-x64-setup.exe` | 使用安装器；没有商业代码签名时，系统可能显示“未知发布者” |
-| Windows 10 1809+ / x64 便携版 | [FocuBili-v1.8.1-windows-x64-portable.zip](https://github.com/L1Xu4n/FocuBili/releases/download/v1.8.1/FocuBili-v1.8.1-windows-x64-portable.zip) | 完整解压后运行 `FocuBili.exe`，保留同目录 DLL 和 `data/` |
-| macOS | `FocuBili-v1.8.1-macos-universal.dmg` | 打开后将 App 拖入 Applications；当前为 ad-hoc 签名、未公证，详见 [Apple 平台说明](docs/APPLE_PLATFORMS.md) |
-| iOS 真机 | [FocuBili-v1.8.1-ios-unsigned.ipa](https://github.com/L1Xu4n/FocuBili/releases/download/v1.8.1/FocuBili-v1.8.1-ios-unsigned.ipa) | 未签名 device IPA，需自行签名并配置适用于设备的 provisioning profile 后安装 |
-| Ubuntu 24.04 系列 / amd64 | `FocuBili-v1.8.1-linux-amd64.deb` | 建议用 `sudo apt install ./实际包名.deb` 安装；支持范围与“未知错误”排查见 [Linux 平台说明](docs/LINUX_PLATFORMS.md) |
+| Android 7.0+ | `FocuBili-v1.8.2-android.apk` | 更新请直接覆盖安装，不要先卸载旧版；本 fork 使用独立签名，从官方版切换需先卸载 |
+| Windows 10 1809+ / x64 | `FocuBili-v1.8.2-windows-x64-setup.exe` | 使用安装器；没有商业代码签名时，系统可能显示“未知发布者” |
+| Windows 10 1809+ / x64 便携版 | [FocuBili-v1.8.2-windows-x64-portable.zip](https://github.com/ningqi24/FocuBili-UI/releases/download/v1.8.2/FocuBili-v1.8.2-windows-x64-portable.zip) | 完整解压后运行 `FocuBili.exe`，保留同目录 DLL 和 `data/` |
+| macOS | `FocuBili-v1.8.2-macos-universal.dmg` | 打开后将 App 拖入 Applications；当前为 ad-hoc 签名、未公证，详见 [Apple 平台说明](docs/APPLE_PLATFORMS.md) |
+| iOS 真机 | [FocuBili-v1.8.2-ios-unsigned.ipa](https://github.com/ningqi24/FocuBili-UI/releases/download/v1.8.2/FocuBili-v1.8.2-ios-unsigned.ipa) | 未签名 device IPA，需自行签名并配置适用于设备的 provisioning profile 后安装 |
+| Ubuntu 24.04 系列 / amd64 | `FocuBili-v1.8.2-linux-amd64.deb` | 建议用 `sudo apt install ./实际包名.deb` 安装；支持范围与“未知错误”排查见 [Linux 平台说明](docs/LINUX_PLATFORMS.md) |
 
 iOS Release 提供的是未签名真机 IPA，需自行完成签名和设备 provisioning；它不是模拟器包，也不是 App Store / TestFlight 分发包。签名与安装限制参见 [Apple 平台说明](docs/APPLE_PLATFORMS.md)。
 
@@ -91,7 +91,7 @@ UP 主先读取最近两页建立有限基线；合集按默认顺序和反向�
 - “我的 → 设置 → 数据导入与导出”分别提供设置和登录信息迁移。 **登录文件含可用于登录账号的明文 Cookie，请只保存在可信位置，不要分享或上传**。导入经 B 站验证成功后才切换账号。
 - 重置设置会关闭焦点订阅、通知和后台检查，保留账号、订阅源与学习资料，重启后生效。设置迁移不等于完整资料备份，离线视频也不会随设置文件迁移。
 - 卸载应用、清除应用数据或系统清理缓存可能影响本机资料；有需要时先使用相应功能的导出入口保存重要内容。
-- 遇到问题，可在“问题诊断”查看版本构建号、BuildTime 和脱敏状态，再通过 [GitHub Issues](https://github.com/L1Xu4n/FocuBili/issues) 或 [QQ群 1055054828](https://qm.qq.com/q/szv665wx7W) 反馈复现步骤。
+- 遇到问题，可在“问题诊断”查看版本构建号、BuildTime 和脱敏状态，再通过 [GitHub Issues](https://github.com/ningqi24/FocuBili-UI/issues) 或 [QQ群 1055054828](https://qm.qq.com/q/szv665wx7W) 反馈复现步骤。
 
 项目依赖非官方接口，网络、账号权限和平台风控可能影响使用。不会绕过充电专属、会员、课堂、私密内容或其他访问控制。不同设备的画中画、通知、全屏和后台恢复仍需持续验证。
 
@@ -102,9 +102,9 @@ Android / Windows / Apple 使用 Flutter 3.44.6，Linux 使用 Flutter 3.47.5；
 以正式版源码开始：
 
 ```bash
-git clone https://github.com/L1Xu4n/FocuBili.git
-cd FocuBili
-git checkout v1.8.1
+git clone https://github.com/ningqi24/FocuBili-UI.git
+cd FocuBili-UI
+git checkout v1.8.2
 flutter pub get
 flutter analyze
 flutter test
@@ -128,7 +128,7 @@ flutter build windows --release
 
 提交修改前请阅读 [贡献指南](CONTRIBUTING.md)，PR 目标为 `dev`。目录结构和第三方依赖可从 `lib/`、`packages/`、`third_party/` 与 `tool/` 查看；首次安装展示的完整声明见 [用户须知与使用协议](docs/USER_AGREEMENT.md)。
 
-发布说明中供 App 展示的摘要格式见 [v1.8.1 更新简报](docs/RELEASE_NOTES_v1.8.1.md)。以往更新见 [v1.8.0](docs/RELEASE_NOTES_v1.8.0.md)、[v1.7.1](docs/RELEASE_NOTES_v1.7.1.md)、[v1.7.0](docs/RELEASE_NOTES_v1.7.0.md) 和 [全部 Releases](https://github.com/L1Xu4n/FocuBili/releases)。
+发布说明中供 App 展示的摘要格式见 [v1.8.2 更新简报](docs/RELEASE_NOTES_v1.8.2.md)。以往更新见 [v1.8.1](docs/RELEASE_NOTES_v1.8.1.md)、[v1.8.0](docs/RELEASE_NOTES_v1.8.0.md)、[v1.7.1](docs/RELEASE_NOTES_v1.7.1.md)、[v1.7.0](docs/RELEASE_NOTES_v1.7.0.md) 和 [全部 Releases](https://github.com/ningqi24/FocuBili-UI/releases)。
 
 ## 致谢
 
